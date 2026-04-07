@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -8,52 +8,51 @@ export default async function handler(req, res) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "OPENAI_API_KEY not configured" });
 
-  const { category = "AI 기술" } = req.body;
+  const { tab = "AI 기술" } = req.body || {};
 
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: "Bearer " + apiKey,
       },
       body: JSON.stringify({
-        model: "gpt-4o-search-preview",
-        web_search_options: {
-          search_context_size: "medium",
-        },
-        messages: [
-          {
-            role: "system",
-            content: `You are a news curator for an AI research team. Return ONLY a JSON array with no other text, no markdown fences. Each item: {"rank":number,"title":"string","summary":"1줄 요약","source":"출처명","url":"URL","date":"YYYY-MM-DD"}`
-          },
-          {
-            role: "user",
-            content: `오늘 날짜 기준 최신 "${category}" 관련 뉴스 6개를 찾아서 JSON 배열로 반환해줘. 한국어 뉴스 우선, 없으면 영어도 가능.`
-          }
-        ],
+        model: "gpt-4o-mini",
+        tools: [{ type: "web_search_preview" }],
+        input: "오늘 날짜 기준으로 최신 AI 관련 뉴스를 검색해서 6개를 알려줘. 카테고리: " + tab + "\n\n반드시 아래 JSON 형식만 응답해. 다른 텍스트 없이 JSON 배열만:\n[{\"rank\":1,\"title\":\"뉴스 제목\",\"summary\":\"1줄 요약\",\"source\":\"출처명\",\"url\":\"기사URL\",\"date\":\"YYYY.MM.DD\"}]\n\n규칙:\n- 반드시 오늘 또는 최근 1주일 내 뉴스만\n- 한국어 뉴스 우선\n- URL은 실제 존재하는 기사 링크\n- JSON 외 다른 텍스트 절대 포함하지 마",
       }),
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("OpenAI API error:", errText);
-      return res.status(response.status).json({ error: "OpenAI API error", detail: errText });
-    }
-
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "";
 
-    const cleaned = content.replace(/```json|```/g, "").trim();
-    const match = cleaned.match(/\[[\s\S]*\]/);
-    if (match) {
-      const news = JSON.parse(match[0]).slice(0, 6);
-      return res.status(200).json({ news });
+    var text = "";
+    if (data.output) {
+      for (var i = 0; i < data.output.length; i++) {
+        var item = data.output[i];
+        if (item.type === "message" && item.content) {
+          for (var j = 0; j < item.content.length; j++) {
+            if (item.content[j].type === "output_text") {
+              text += item.content[j].text;
+            }
+          }
+        }
+      }
     }
 
-    return res.status(200).json({ news: [], raw: content });
+    if (!text) {
+      return res.status(500).json({ error: "No response from OpenAI", raw: JSON.stringify(data).slice(0, 500) });
+    }
+
+    var cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    var match = cleaned.match(/\[[\s\S]*\]/);
+    if (!match) {
+      return res.status(500).json({ error: "Failed to parse news", raw: text.slice(0, 500) });
+    }
+
+    var news = JSON.parse(match[0]).slice(0, 6);
+    return res.status(200).json({ news: news });
   } catch (e) {
-    console.error("Server error:", e);
     return res.status(500).json({ error: e.message });
   }
-}
+};
