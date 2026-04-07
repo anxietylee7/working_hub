@@ -276,6 +276,33 @@ function TaskBanner() {
 }
 
 // ─── Todo Banner ───
+function getWeekRange(year, week) {
+  const jan4 = new Date(year, 0, 4);
+  const dayOfWeek = jan4.getDay() || 7;
+  const firstMonday = new Date(jan4);
+  firstMonday.setDate(jan4.getDate() - dayOfWeek + 1);
+  const monday = new Date(firstMonday);
+  monday.setDate(firstMonday.getDate() + (week - 1) * 7);
+  const friday = new Date(monday);
+  friday.setDate(monday.getDate() + 4);
+  return { monday, friday };
+}
+
+function getCurrentWeek() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const jan4 = new Date(year, 0, 4);
+  const dayOfWeek = jan4.getDay() || 7;
+  const firstMonday = new Date(jan4);
+  firstMonday.setDate(jan4.getDate() - dayOfWeek + 1);
+  const diff = Math.floor((now - firstMonday) / (7 * 24 * 60 * 60 * 1000));
+  return { year, week: diff + 1 };
+}
+
+function fmtMD(d) {
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
 function TodoBanner({ isAdmin }) {
   const [todos, setTodos] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
@@ -283,13 +310,24 @@ function TodoBanner({ isAdmin }) {
   const [editId, setEditId] = useState(null);
   const [editText, setEditText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [weekYear, setWeekYear] = useState(() => getCurrentWeek().year);
+  const [weekNum, setWeekNum] = useState(() => getCurrentWeek().week);
+
+  const { monday, friday } = getWeekRange(weekYear, weekNum);
+  const month = monday.getMonth() + 1;
+  const firstDayOfMonth = new Date(monday.getFullYear(), monday.getMonth(), 1);
+  const firstMonday = new Date(firstDayOfMonth);
+  firstMonday.setDate(firstDayOfMonth.getDate() + ((8 - firstDayOfMonth.getDay()) % 7 || 7) - 7);
+  if (firstMonday < firstDayOfMonth) firstMonday.setDate(firstMonday.getDate() + 7);
+  const monthWeek = Math.ceil((monday.getDate() + (new Date(monday.getFullYear(), monday.getMonth(), 1).getDay() || 7) - 1) / 7);
+  const weekLabel = `${weekYear}년 ${month}월 ${monthWeek}주차 (${fmtMD(monday)} ~ ${fmtMD(friday)})`;
 
   const load = useCallback(async () => {
     try {
-      const r = await sbGet("todos", "order=sort_order.asc,created_at.asc");
+      const r = await sbGet("todos", `week_year=eq.${weekYear}&week_number=eq.${weekNum}&order=sort_order.asc,created_at.asc`);
       setTodos(r);
     } catch {}
-  }, []);
+  }, [weekYear, weekNum]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -297,11 +335,24 @@ function TodoBanner({ isAdmin }) {
   const totalCount = todos.length;
   const pendingCount = totalCount - doneCount;
 
+  const prevWeek = () => {
+    if (weekNum <= 1) { setWeekYear(y => y - 1); setWeekNum(52); }
+    else setWeekNum(w => w - 1);
+  };
+  const nextWeek = () => {
+    if (weekNum >= 52) { setWeekYear(y => y + 1); setWeekNum(1); }
+    else setWeekNum(w => w + 1);
+  };
+  const goThisWeek = () => {
+    const c = getCurrentWeek();
+    setWeekYear(c.year); setWeekNum(c.week);
+  };
+
   const addTodo = async () => {
     if (!newText.trim()) return;
     setSaving(true);
     try {
-      await sbPost("todos", { id: `todo-${uid()}`, text: newText.trim(), done: false, sort_order: todos.length });
+      await sbPost("todos", { id: `todo-${uid()}`, text: newText.trim(), done: false, sort_order: todos.length, week_year: weekYear, week_number: weekNum });
       setNewText("");
       await load();
     } catch (e) { alert("추가 실패: " + e.message); }
@@ -316,10 +367,7 @@ function TodoBanner({ isAdmin }) {
   };
 
   const deleteTodo = async (id) => {
-    try {
-      await sbDelete("todos", id);
-      setTodos(prev => prev.filter(t => t.id !== id));
-    } catch {}
+    try { await sbDelete("todos", id); setTodos(prev => prev.filter(t => t.id !== id)); } catch {}
   };
 
   const saveEdit = async (id) => {
@@ -345,10 +393,10 @@ function TodoBanner({ isAdmin }) {
                 <span style={S.taskDivider}>·</span>
                 <span style={{ color: "#10b981" }}>완료 {doneCount}건</span>
                 <span style={S.taskDivider}>|</span>
-                <span style={{ opacity: 0.6 }}>총 {totalCount}건</span>
+                <span style={{ opacity: 0.6 }}>{weekLabel}</span>
               </>
             ) : (
-              <span style={{ opacity: 0.6 }}>등록된 항목 없음</span>
+              <span style={{ opacity: 0.6 }}>{weekLabel} — 등록된 항목 없음</span>
             )}
           </span>
         </div>
@@ -358,19 +406,26 @@ function TodoBanner({ isAdmin }) {
       {showPopup && (
         <div style={S.overlay} onClick={() => setShowPopup(false)}>
           <div style={S.todoPopup} onClick={e => e.stopPropagation()}>
+            {/* Header */}
             <div style={S.taskPopupHeader}>
               <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>✅ 팀 To Do List</h3>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ fontSize: 13, color: "#9ca3af" }}>{doneCount}/{totalCount} 완료</span>
-                <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
-              </div>
+              <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
             </div>
 
-            {/* Progress bar */}
-            <div style={{ padding: "0 24px 16px" }}>
-              <div style={{ height: 6, background: "#f0f1f5", borderRadius: 3, overflow: "hidden" }}>
+            {/* Week navigation */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "12px 24px", borderBottom: "1px solid #f0f1f5" }}>
+              <button onClick={prevWeek} style={S.weekNavBtn}>◀</button>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>{weekLabel}</span>
+              <button onClick={nextWeek} style={S.weekNavBtn}>▶</button>
+              <button onClick={goThisWeek} style={S.weekTodayBtn}>이번 주</button>
+            </div>
+
+            {/* Progress */}
+            <div style={{ padding: "12px 24px 8px", display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ flex: 1, height: 6, background: "#f0f1f5", borderRadius: 3, overflow: "hidden" }}>
                 <div style={{ height: "100%", width: totalCount > 0 ? `${(doneCount / totalCount) * 100}%` : "0%", background: "linear-gradient(90deg, #10b981, #34d399)", borderRadius: 3, transition: "width 0.3s" }} />
               </div>
+              <span style={{ fontSize: 12, color: "#9ca3af", flexShrink: 0 }}>{doneCount}/{totalCount} 완료</span>
             </div>
 
             {/* Todo list */}
@@ -393,10 +448,10 @@ function TodoBanner({ isAdmin }) {
                   )}
                 </div>
               ))}
-              {todos.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af", fontSize: 14 }}>등록된 할 일이 없습니다</div>}
+              {todos.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af", fontSize: 14 }}>이번 주 등록된 할 일이 없습니다</div>}
             </div>
 
-            {/* Add new todo (admin only) */}
+            {/* Add (admin only) */}
             {isAdmin && (
               <div style={{ padding: "16px 24px", borderTop: "1px solid #f0f1f5", display: "flex", gap: 8 }}>
                 <input value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => e.key === "Enter" && addTodo()} placeholder="새 할 일 입력..." style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, fontFamily: "inherit" }} />
@@ -966,6 +1021,8 @@ const S = {
   taskPopupClose: { background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#9ca3af", padding: "4px 8px", borderRadius: 6 },
   taskIframe: { flex: 1, width: "100%", border: "none" },
   todoPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
+  weekNavBtn: { background: "none", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 12, color: "#6b7280", fontFamily: "inherit" },
+  weekTodayBtn: { background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#4338ca", fontFamily: "inherit" },
   weatherCard: { background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", borderRadius: 16, padding: "18px 20px", border: "1px solid rgba(255,255,255,0.12)", minWidth: 260 },
   weatherTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 },
   weatherMain: { display: "flex", alignItems: "center", gap: 12 },
