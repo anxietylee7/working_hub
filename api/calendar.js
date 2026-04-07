@@ -5,120 +5,123 @@ export default async function handler(req, res) {
 
   try {
     const r = await fetch(ICS_URL, {
-      headers: { "User-Agent": "LinkHub/1.0" },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; LinkHub/1.0)" },
     });
 
     if (!r.ok) throw new Error("ICS fetch failed: " + r.status);
-    const text = await r.text();
+    let text = await r.text();
 
     if (!text.includes("BEGIN:VCALENDAR")) {
-      return res.status(500).json({ error: "Invalid ICS data" });
+      return res.status(500).json({ error: "Invalid ICS data", preview: text.slice(0, 200) });
     }
 
-    // Parse ICS events
-    const events = [];
-    const blocks = text.split("BEGIN:VEVENT");
+    // Unfold: lines starting with space/tab are continuation of previous line
+    text = text.replace(/\r\n[ \t]/g, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
-    for (let i = 1; i < blocks.length; i++) {
-      const block = blocks[i].split("END:VEVENT")[0];
-      const summary = extractICSField(block, "SUMMARY");
-      const dtstart = extractICSDate(block, "DTSTART");
-      const dtend = extractICSDate(block, "DTEND");
-      const location = extractICSField(block, "LOCATION");
+    const events = [];
+    const veventBlocks = text.match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g) || [];
+
+    for (const block of veventBlocks) {
+      const summary = getField(block, "SUMMARY");
+      const dtstart = getDateField(block, "DTSTART");
+      const dtend = getDateField(block, "DTEND");
+      const location = getField(block, "LOCATION");
 
       if (summary && dtstart) {
         events.push({
-          title: summary,
+          title: cleanText(summary),
           start: dtstart,
-          end: dtend,
-          location: location || "",
+          end: dtend || dtstart,
+          location: cleanText(location),
         });
       }
     }
 
-    // Filter: this week (Mon~Fri)
-    const now = new Date();
-    const koreaOffset = 9 * 60 * 60 * 1000;
-    const koreaNow = new Date(now.getTime() + koreaOffset);
+    // KST 기준 이번 주 월~일
+    const nowKST = toKST(new Date());
+    const dayOfWeek = nowKST.getDay() || 7;
+    
+    const mondayKST = new Date(nowKST);
+    mondayKST.setDate(nowKST.getDate() - dayOfWeek + 1);
+    const mondayStr = dateStr(mondayKST);
+    
+    const sundayKST = new Date(mondayKST);
+    sundayKST.setDate(mondayKST.getDate() + 6);
+    const sundayStr = dateStr(sundayKST);
 
-    const day = koreaNow.getUTCDay() || 7;
-    const monday = new Date(koreaNow);
-    monday.setUTCDate(koreaNow.getUTCDate() - day + 1);
-    monday.setUTCHours(0, 0, 0, 0);
-
-    const sunday = new Date(monday);
-    sunday.setUTCDate(monday.getUTCDate() + 6);
-    sunday.setUTCHours(23, 59, 59, 999);
+    const todayStr = dateStr(nowKST);
 
     const weekEvents = events
       .filter(e => {
-        const d = new Date(e.start);
-        return d >= monday && d <= sunday;
+        const d = e.start.slice(0, 10);
+        return d >= mondayStr && d <= sundayStr;
       })
-      .sort((a, b) => new Date(a.start) - new Date(b.start));
+      .sort((a, b) => a.start.localeCompare(b.start));
 
-    // Today's events
-    const todayStr = koreaNow.toISOString().split("T")[0];
     const todayEvents = weekEvents.filter(e => e.start.startsWith(todayStr));
 
-    // Next upcoming meeting from now
-    const nowISO = koreaNow.toISOString();
-    const upcoming = todayEvents.find(e => e.start >= nowISO) || todayEvents[0] || null;
+    const nowTimeStr = `${todayStr}T${pad2(nowKST.getHours())}:${pad2(nowKST.getMinutes())}:00`;
+    const upcoming = todayEvents.find(e => e.start >= nowTimeStr) || todayEvents[0] || null;
 
     return res.status(200).json({
       today: todayEvents,
       week: weekEvents,
       todayCount: todayEvents.length,
       upcoming,
+      debug: { mondayStr, sundayStr, todayStr, totalParsed: events.length, weekFiltered: weekEvents.length, veventCount: veventBlocks.length }
     });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
 }
 
-function extractICSField(block, field) {
-  // Handle folded lines and various formats
-  const regex = new RegExp("(?:^|\\n)" + field + "(?:[;:][^\\n]*):(.*?)(?=\\n[A-Z])", "s");
+function toKST(d) {
+  return new Date(d.toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
+}
+
+function dateStr(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function getField(block, field) {
+  // Match FIELD;params:value or FIELD:value
+  const regex = new RegExp("^" + field + "(?:;[^:]*)?:(.+)$", "m");
   const m = block.match(regex);
-  if (!m) {
-    const simple = new RegExp("(?:^|\\n)" + field + "(?:[;:].*?)?:(.+)", "m");
-    const s = block.match(simple);
-    return s ? unfold(s[1].trim()) : "";
-  }
-  return unfold(m[1].trim());
+  return m ? m[1].trim() : "";
 }
 
-function extractICSDate(block, field) {
-  // Match DTSTART;TZID=...:20260407T100000 or DTSTART:20260407T100000Z or DTSTART;VALUE=DATE:20260407
-  const patterns = [
-    new RegExp("(?:^|\\n)" + field + "(?:;[^:]*)?:(\\d{8}T\\d{6}Z?)", "m"),
-    new RegExp("(?:^|\\n)" + field + "(?:;[^:]*)?:(\\d{8})", "m"),
-  ];
+function getDateField(block, field) {
+  // Match various date formats
+  const regex = new RegExp("^" + field + "(?:;[^:]*)?:(\\d{8}(?:T\\d{6}Z?)?)\\s*$", "m");
+  const m = block.match(regex);
+  if (!m) return "";
 
-  for (const p of patterns) {
-    const m = block.match(p);
-    if (m) {
-      const raw = m[1];
-      if (raw.length === 8) {
-        // All-day event
-        return `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}T00:00:00`;
-      }
-      // DateTime
-      const y = raw.slice(0, 4), mo = raw.slice(4, 6), d = raw.slice(6, 8);
-      const h = raw.slice(9, 11), mi = raw.slice(11, 13), s = raw.slice(13, 15);
-      if (raw.endsWith("Z")) {
-        // UTC -> KST (+9h)
-        const utc = new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}Z`);
-        const kst = new Date(utc.getTime() + 9 * 60 * 60 * 1000);
-        return kst.toISOString().replace("Z", "").slice(0, 19);
-      }
-      // Assume already local (TZID)
-      return `${y}-${mo}-${d}T${h}:${mi}:${s}`;
-    }
+  const raw = m[1];
+
+  // Date only (all-day event)
+  if (raw.length === 8) {
+    return `${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}T00:00:00`;
   }
-  return "";
+
+  const y = raw.slice(0,4), mo = raw.slice(4,6), d = raw.slice(6,8);
+  const h = raw.slice(9,11), mi = raw.slice(11,13), s = raw.slice(13,15);
+
+  // UTC time -> convert to KST
+  if (raw.endsWith("Z")) {
+    const utc = new Date(Date.UTC(+y, +mo-1, +d, +h, +mi, +s));
+    const kst = new Date(utc.getTime() + 9 * 60 * 60 * 1000);
+    return `${kst.getFullYear()}-${pad2(kst.getMonth()+1)}-${pad2(kst.getDate())}T${pad2(kst.getHours())}:${pad2(kst.getMinutes())}:${pad2(kst.getSeconds())}`;
+  }
+
+  // Already local time (TZID specified)
+  return `${y}-${mo}-${d}T${h}:${mi}:${s}`;
 }
 
-function unfold(s) {
-  return s.replace(/\r?\n[ \t]/g, "").replace(/\\n/g, " ").replace(/\\,/g, ",").replace(/\\/g, "");
+function cleanText(s) {
+  if (!s) return "";
+  return s.replace(/\\n/g, " ").replace(/\\,/g, ",").replace(/\\;/g, ";").replace(/\\\\/g, "\\");
 }
