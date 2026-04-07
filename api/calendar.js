@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  const ICS_URL = "https://outlook.office365.com/owa/calendar/9bb369c087514f938c3e6af3fac656a9@smilegate.com/d49b9a1bab324e7bbd6a761f6ce8f6628415992148646106780/calendar.ics";
+  const ICS_URL = "https://outlook.office365.com/owa/calendar/9bb369c087514f938c3e6af3fac656a9@smilegate.com/a8c79feb4fe14c44a48f6a3e7a4b4f019172690863627632956/calendar.ics";
 
   try {
     const r = await fetch(ICS_URL, {
