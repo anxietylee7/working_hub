@@ -1074,7 +1074,7 @@ const S = {
   root: { fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif", background: "#f0f1f5", minHeight: "100vh", color: "#1a1a2e" },
   hero: { background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)", padding: "36px 32px 40px", color: "#fff" },
   heroInner: { maxWidth: 1160, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "end" },
-  heroLeft: { display: "flex", flexDirection: "column" }, heroRight: { minWidth: 260, display: "flex", flexDirection: "column", gap: 10 },
+  heroLeft: { display: "flex", flexDirection: "column" }, heroRight: { width: 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10 },
   heroDate: { fontSize: 13, opacity: 0.6, marginBottom: 6, fontWeight: 500 },
   heroTitle: { fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 4 },
   heroSub: { fontSize: 14, opacity: 0.7, fontWeight: 400 },
@@ -1101,7 +1101,7 @@ const S = {
   weekNavBtn: { background: "none", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 12, color: "#6b7280", fontFamily: "inherit" },
   weekTodayBtn: { background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#4338ca", fontFamily: "inherit" },
   // Schedule card (replaces weather)
-  scheduleCard: { background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.12)", minWidth: 280, overflow: "hidden" },
+  scheduleCard: { background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.12)", width: 300, overflow: "hidden" },
   scheduleHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.08)" },
   scheduleList: { padding: "4px 0", maxHeight: 220, overflowY: "auto" },
   scheduleItem: { display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 18px" },
