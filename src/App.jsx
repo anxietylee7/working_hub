@@ -111,7 +111,9 @@ export default function TeamLinkHub() {
     setSaving(true);
     try {
       if (modal.type === "link") {
-        const title = f.title.value.trim(), url = f.url.value.trim(), desc = f.desc.value.trim();
+        const title = f.querySelector('[name="title"]').value.trim();
+        const url = f.querySelector('[name="url"]').value.trim();
+        const desc = f.querySelector('[name="desc"]').value.trim();
         if (!title || !url) { setSaving(false); return; }
         const fullUrl = url.startsWith("http") ? url : `https://${url}`;
         if (modal.item) {
@@ -120,8 +122,10 @@ export default function TeamLinkHub() {
           await sbPost("links", { id: `l-${uid()}`, category_id: modal.catId, title, url: fullUrl, description: desc });
         }
       } else {
-        const name = f.catname.value.trim(), emoji = f.emoji.value.trim() || "📁";
-        const color = f.color?.value || PALETTE[categories.length % PALETTE.length];
+        const name = f.querySelector('[name="catname"]').value.trim();
+        const emoji = f.querySelector('[name="emoji"]').value.trim() || "📁";
+        const colorEl = f.querySelector('[name="color"]:checked');
+        const color = colorEl ? colorEl.value : PALETTE[categories.length % PALETTE.length];
         if (!name) { setSaving(false); return; }
         if (modal.item) {
           await sbPatch("categories", modal.item.id, { name, emoji, color });
@@ -130,9 +134,12 @@ export default function TeamLinkHub() {
         }
       }
       await fetchAll();
-    } catch (e) { console.error("Save error:", e); }
+      setModal(null);
+    } catch (e) {
+      console.error("Save error:", e);
+      alert("저장 실패: " + e.message);
+    }
     setSaving(false);
-    setModal(null);
   };
 
   const handleDelete = async () => {
@@ -141,9 +148,12 @@ export default function TeamLinkHub() {
       if (deleteConfirm.type === "link") await sbDelete("links", deleteConfirm.id);
       else await sbDelete("categories", deleteConfirm.id);
       await fetchAll();
-    } catch (e) { console.error("Delete error:", e); }
+      setDeleteConfirm(null);
+    } catch (e) {
+      console.error("Delete error:", e);
+      alert("삭제 실패: " + e.message);
+    }
     setSaving(false);
-    setDeleteConfirm(null);
   };
 
   const weekday = ["일","월","화","수","목","금","토"][now.getDay()];
