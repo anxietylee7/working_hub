@@ -198,7 +198,6 @@ function TodaySchedule() {
             <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{dateStr} 일정</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: "#c7d2fe" }}>{cal ? `${cal.todayCount}건` : "..."}</span>
           </div>
-          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>이번 주 보기 →</span>
         </div>
 
         <div style={S.scheduleList}>
