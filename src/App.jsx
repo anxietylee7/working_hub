@@ -667,7 +667,7 @@ export default function TeamLinkHub() {
       <header style={S.hero}>
         <div style={S.heroInner}>
           <div style={S.heroLeft}>
-            <p style={S.heroDate}>{now.getFullYear()}년 {now.getMonth()+1}월 {now.getDate()}일 ({weekday})</p>
+            <p style={S.heroDate}>{now.getFullYear()}년 {now.getMonth()+1}월 {now.getDate()}일 ({weekday}) {String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}</p>
             <h1 style={S.heroTitle}>{greeting} 👋</h1>
             <p style={S.heroSub}>선행AI팀 팀 업무에 필요한 모든 링크를 한 곳에서</p>
             <div style={{ ...S.searchBox, marginTop: 16 }}>
@@ -1002,8 +1002,8 @@ const CSS = `
 const S = {
   root: { fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif", background: "#f0f1f5", minHeight: "100vh", color: "#1a1a2e" },
   hero: { background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)", padding: "36px 32px 40px", color: "#fff" },
-  heroInner: { maxWidth: 1160, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "start" },
-  heroLeft: {}, heroRight: { minWidth: 260 },
+  heroInner: { maxWidth: 1160, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "stretch" },
+  heroLeft: { display: "flex", flexDirection: "column" }, heroRight: { minWidth: 260, display: "flex", alignItems: "stretch" },
   heroDate: { fontSize: 13, opacity: 0.6, marginBottom: 6, fontWeight: 500 },
   heroTitle: { fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 4 },
   heroSub: { fontSize: 14, opacity: 0.7, fontWeight: 400 },
@@ -1023,7 +1023,7 @@ const S = {
   todoPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
   weekNavBtn: { background: "none", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 12, color: "#6b7280", fontFamily: "inherit" },
   weekTodayBtn: { background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#4338ca", fontFamily: "inherit" },
-  weatherCard: { background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", borderRadius: 16, padding: "18px 20px", border: "1px solid rgba(255,255,255,0.12)", minWidth: 260 },
+  weatherCard: { background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", borderRadius: 16, padding: "18px 20px", border: "1px solid rgba(255,255,255,0.12)", minWidth: 260, flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" },
   weatherTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 },
   weatherMain: { display: "flex", alignItems: "center", gap: 12 },
   weatherTemp: { fontSize: 32, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.03em" },
