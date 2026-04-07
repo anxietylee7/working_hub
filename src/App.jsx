@@ -197,6 +197,84 @@ function AINewsFeed() {
   );
 }
 
+// ─── Task Banner ───
+function getWeekInfo() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const jan4 = new Date(year, 0, 4);
+  const dayOfWeek = jan4.getDay() || 7;
+  const firstMonday = new Date(jan4);
+  firstMonday.setDate(jan4.getDate() - dayOfWeek + 1);
+  const diff = Math.floor((now - firstMonday) / (7 * 24 * 60 * 60 * 1000));
+  return { year, week: diff + 1 };
+}
+
+function TaskBanner() {
+  const [stats, setStats] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { year, week } = getWeekInfo();
+        const r = await fetch(`https://task-tracker-eta-lovat.vercel.app/api/tasks?week_year=${year}&week_number=${week}&include_carry=true`);
+        const tasks = await r.json();
+        if (Array.isArray(tasks)) {
+          const done = tasks.filter(t => t.status === "done").length;
+          const inProgress = tasks.filter(t => t.status === "in_progress").length;
+          const waiting = tasks.filter(t => t.status === "todo" || t.status === "pending" || !t.status).length;
+          setStats({ total: tasks.length, done, inProgress, waiting });
+        }
+      } catch {}
+    };
+    load();
+    const t = setInterval(load, 300000);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <>
+      <div className="task-banner" style={S.taskBanner} onClick={() => setShowPopup(true)}>
+        <span style={{ fontSize: 16 }}>📋</span>
+        <div style={S.taskMarquee}>
+          <span style={S.taskMarqueeInner}>
+            {stats ? (
+              <>
+                <span style={{ fontWeight: 700 }}>LAM TASK 현황</span>
+                <span style={S.taskDivider}>|</span>
+                <span style={{ color: "#f59e0b" }}>진행중 {stats.inProgress}건</span>
+                <span style={S.taskDivider}>·</span>
+                <span style={{ color: "#6b7280" }}>대기 {stats.waiting}건</span>
+                <span style={S.taskDivider}>·</span>
+                <span style={{ color: "#10b981" }}>완료 {stats.done}건</span>
+                <span style={S.taskDivider}>|</span>
+                <span style={{ opacity: 0.6 }}>총 {stats.total}건</span>
+              </>
+            ) : "📋 TASK 현황 불러오는 중..."}
+          </span>
+        </div>
+        <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>클릭하여 상세보기 →</span>
+      </div>
+
+      {showPopup && (
+        <div style={S.overlay} onClick={() => setShowPopup(false)}>
+          <div style={S.taskPopup} onClick={e => e.stopPropagation()}>
+            <div style={S.taskPopupHeader}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>📋 LAM TASK 현황</h3>
+              <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
+            </div>
+            <iframe
+              src="https://task-tracker-eta-lovat.vercel.app/widget2"
+              style={S.taskIframe}
+              title="Task Widget"
+            />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ─── Main ───
 export default function TeamLinkHub() {
   const [categories, setCategories] = useState([]);
@@ -398,6 +476,7 @@ export default function TeamLinkHub() {
               <input style={S.searchInput} placeholder="링크 검색..." value={search} onChange={e => setSearch(e.target.value)} />
               {search && <button style={S.clearBtn} onClick={() => setSearch("")}>✕</button>}
             </div>
+            <TaskBanner />
           </div>
           <div style={S.heroRight}><WeatherWidget /></div>
         </div>
@@ -432,28 +511,6 @@ export default function TeamLinkHub() {
             </div>
           ) : (
             <>
-              {/* Quick Links — editable */}
-              <div style={S.quickLinks}>
-                {quicklinks.map(ql => ql.title ? (
-                  <div key={ql.id} style={{ position: "relative" }}>
-                    <a href={ql.url} target="_blank" rel="noopener noreferrer" className="quick-link" style={{ ...S.quickLink, borderLeft: `4px solid ${ql.color}` }}>
-                      <span style={{ fontSize: 20 }}>{ql.emoji}</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "#1a1a2e", flex: 1 }}>{ql.title}</span>
-                      <svg style={{ flexShrink: 0, opacity: 0.3 }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={ql.color} strokeWidth="2.5" strokeLinecap="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
-                    </a>
-                    {isAdmin && <div className="ql-actions" style={S.qlActions}>
-                      <button className="ql-btn" onClick={() => setQlModal(ql)}>✏️</button>
-                      <button className="ql-btn" onClick={() => handleQlClear(ql.id)}>✕</button>
-                    </div>}
-                  </div>
-                ) : (
-                  <button key={ql.id} onClick={() => isAdmin ? setQlModal(ql) : null} style={S.quickLinkEmpty}>
-                    <span style={{ fontSize: 18, opacity: 0.4 }}>+</span>
-                    <span style={{ fontSize: 12, color: "#9ca3af" }}>{isAdmin ? "바로가기 추가" : "빈 슬롯"}</span>
-                  </button>
-                ))}
-              </div>
-
               {/* Category Tabs — pill buttons */}
               <div style={S.catTabBar}>
                 <div style={S.catTabList}>
@@ -510,6 +567,28 @@ export default function TeamLinkHub() {
                     </>
                   );
                 })()}
+              </div>
+
+              {/* Quick Links — below categories */}
+              <div style={{ ...S.quickLinks, marginTop: 16 }}>
+                {quicklinks.map(ql => ql.title ? (
+                  <div key={ql.id} style={{ position: "relative" }}>
+                    <a href={ql.url} target="_blank" rel="noopener noreferrer" className="quick-link" style={{ ...S.quickLink, borderLeft: `4px solid ${ql.color}` }}>
+                      <span style={{ fontSize: 20 }}>{ql.emoji}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#1a1a2e", flex: 1 }}>{ql.title}</span>
+                      <svg style={{ flexShrink: 0, opacity: 0.3 }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={ql.color} strokeWidth="2.5" strokeLinecap="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                    </a>
+                    {isAdmin && <div className="ql-actions" style={S.qlActions}>
+                      <button className="ql-btn" onClick={() => setQlModal(ql)}>✏️</button>
+                      <button className="ql-btn" onClick={() => handleQlClear(ql.id)}>✕</button>
+                    </div>}
+                  </div>
+                ) : (
+                  <button key={ql.id} onClick={() => isAdmin ? setQlModal(ql) : null} style={S.quickLinkEmpty}>
+                    <span style={{ fontSize: 18, opacity: 0.4 }}>+</span>
+                    <span style={{ fontSize: 12, color: "#9ca3af" }}>{isAdmin ? "바로가기 추가" : "빈 슬롯"}</span>
+                  </button>
+                ))}
               </div>
             </>
           )}
@@ -713,6 +792,8 @@ const CSS = `
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes linkFlash { 0% { background: #eef2ff; } 100% { background: transparent; } }
   .link-moved { animation: linkFlash 0.6s ease-out; }
+  .task-banner { cursor: pointer; transition: background 0.15s; }
+  .task-banner:hover { background: rgba(255,255,255,0.18) !important; }
   .ql-actions { position: absolute; top: 4px; right: 4px; display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
   .ql-actions .ql-btn { background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 11px; padding: 2px 5px; }
   div:hover > .ql-actions { opacity: 1; }
@@ -729,6 +810,16 @@ const S = {
   searchBox: { display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.12)", backdropFilter: "blur(8px)", borderRadius: 12, padding: "10px 16px", minWidth: 240, border: "1px solid rgba(255,255,255,0.15)" },
   searchInput: { border: "none", background: "transparent", fontSize: 14, flex: 1, outline: "none", fontFamily: "inherit", color: "#fff" },
   clearBtn: { background: "rgba(255,255,255,0.2)", border: "none", cursor: "pointer", color: "#fff", fontSize: 11, padding: "2px 6px", borderRadius: 4 },
+
+  // Task banner
+  taskBanner: { display: "flex", alignItems: "center", gap: 12, marginTop: 12, padding: "10px 16px", background: "rgba(255,255,255,0.1)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", color: "#fff" },
+  taskMarquee: { flex: 1, overflow: "hidden" },
+  taskMarqueeInner: { display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap" },
+  taskDivider: { opacity: 0.3 },
+  taskPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 700, height: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
+  taskPopupHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #f0f1f5" },
+  taskPopupClose: { background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#9ca3af", padding: "4px 8px", borderRadius: 6 },
+  taskIframe: { flex: 1, width: "100%", border: "none" },
   weatherCard: { background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", borderRadius: 16, padding: "18px 20px", border: "1px solid rgba(255,255,255,0.12)", minWidth: 260 },
   weatherTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 },
   weatherMain: { display: "flex", alignItems: "center", gap: 12 },
