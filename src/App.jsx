@@ -243,8 +243,11 @@ function CalendarBadge() {
   return (
     <>
       <div className="cal-card" style={S.calCard} onClick={() => setShowPopup(true)}>
-        <div style={{ fontSize: 15, fontWeight: 700 }}>
-          {new Date().getFullYear()}년 {new Date().getMonth() + 1}월 {new Date().getDate()}일: {cal ? `${cal.todayCount}건` : "..."}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 18 }}>📅</span>
+          <span style={{ fontSize: 15, fontWeight: 700 }}>
+            {new Date().getFullYear()}년 {new Date().getMonth() + 1}월 {new Date().getDate()}일: {cal ? `${cal.todayCount}건` : "..."}
+          </span>
         </div>
         <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
           {cal?.upcoming ? `다음: ${fmtTime(cal.upcoming.start)} ${cal.upcoming.title.length > 20 ? cal.upcoming.title.slice(0, 20) + "…" : cal.upcoming.title}` : "예정된 일정 없음"}
@@ -767,7 +770,6 @@ export default function TeamLinkHub() {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
               <p style={{ ...S.heroSub, margin: 0 }}>선행AI팀 팀 업무에 필요한 모든 링크를 한 곳에서</p>
-              <CalendarBadge />
             </div>
             <div style={{ ...S.searchBox, marginTop: 16 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -777,7 +779,10 @@ export default function TeamLinkHub() {
             <TaskBanner />
             <TodoBanner isAdmin={isAdmin} />
           </div>
-          <div style={S.heroRight}><WeatherWidget /></div>
+          <div style={S.heroRight}>
+            <CalendarBadge />
+            <WeatherWidget />
+          </div>
         </div>
       </header>
 
@@ -1104,7 +1109,7 @@ const S = {
   root: { fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif", background: "#f0f1f5", minHeight: "100vh", color: "#1a1a2e" },
   hero: { background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)", padding: "36px 32px 40px", color: "#fff" },
   heroInner: { maxWidth: 1160, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "stretch" },
-  heroLeft: { display: "flex", flexDirection: "column" }, heroRight: { minWidth: 260, display: "flex", alignItems: "stretch" },
+  heroLeft: { display: "flex", flexDirection: "column" }, heroRight: { minWidth: 260, display: "flex", flexDirection: "column", gap: 10 },
   heroDate: { fontSize: 13, opacity: 0.6, marginBottom: 6, fontWeight: 500 },
   heroTitle: { fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 4 },
   heroSub: { fontSize: 14, opacity: 0.7, fontWeight: 400 },
