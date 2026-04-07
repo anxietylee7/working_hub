@@ -46,59 +46,6 @@ const LABEL_COLORS = [
   { id: "gray", name: "회색", bg: "#f3f4f6", text: "#374151" },
 ];
 
-// ─── Weather ───
-const WEATHER_ICONS = {
-  "맑음": "☀️", "대체로 맑음": "🌤️", "구름조금": "⛅", "구름 조금": "⛅",
-  "흐림": "☁️", "안개": "🌫️", "비": "🌧️", "소나기": "🌦️",
-  "눈": "🌨️", "폭설": "❄️", "뇌우": "⛈️",
-};
-const getWIcon = (code) => WEATHER_ICONS[code] || "🌡️";
-
-function WeatherWidget() {
-  const [w, setW] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [ts, setTs] = useState(null);
-  const load = useCallback(async () => {
-    try {
-      const r = await fetch("/api/weather");
-      const data = await r.json();
-      if (data.temp !== undefined) { setW(data); setTs(new Date()); }
-    } catch {}
-    setLoading(false);
-  }, []);
-  useEffect(() => { load(); const t = setInterval(load, 600000); return () => clearInterval(t); }, [load]);
-
-  if (!w) return <div style={S.weatherCard}><span style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{loading ? "날씨 불러오는 중..." : "날씨 정보 없음"}</span></div>;
-  return (
-    <div style={S.weatherCard}>
-      <div style={S.weatherTop}>
-        <div style={S.weatherMain}>
-          <span style={{ fontSize: 36, lineHeight: 1 }}>{getWIcon(w.weather_code)}</span>
-          <div>
-            <div style={S.weatherTemp}>{w.temp}°</div>
-            <div style={S.weatherLabel}>{w.weather_code}</div>
-          </div>
-        </div>
-        <div style={S.weatherMeta}>
-          <div style={S.wmi}><span style={{ opacity: 0.6 }}>체감</span><span>{w.apparent_temp}°</span></div>
-          <div style={S.wmi}><span style={{ opacity: 0.6 }}>습도</span><span>{w.humidity}%</span></div>
-          <div style={S.wmi}><span style={{ opacity: 0.6 }}>바람</span><span>{w.wind_speed}km/h</span></div>
-        </div>
-      </div>
-      {w.forecast && <div style={S.weatherForecast}>
-        {w.forecast.map((f, i) => (
-          <div key={i} style={S.forecastDay}>
-            <span style={{ fontSize: 12, opacity: 0.7, fontWeight: 600 }}>{f.day}</span>
-            <span style={{ fontSize: 18 }}>{getWIcon(f.code)}</span>
-            <span style={{ fontSize: 12, fontWeight: 600 }}>{f.max}° / {f.min}°</span>
-          </div>
-        ))}
-      </div>}
-      <div style={S.weatherFooter}><span>📍 판교 삼평동</span><span>{ts ? `${ts.getHours()}:${String(ts.getMinutes()).padStart(2,"0")} 업데이트`:""}</span></div>
-    </div>
-  );
-}
-
 // ─── AI News Feed ───
 const NEWS_TABS = [
   { id: "ai", label: "AI 기술" },
@@ -197,8 +144,8 @@ function AINewsFeed() {
   );
 }
 
-// ─── Calendar Badge ───
-function CalendarBadge() {
+// ─── Today Schedule (replaces Weather + Calendar Badge) ───
+function TodaySchedule() {
   const [cal, setCal] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
 
@@ -211,14 +158,14 @@ function CalendarBadge() {
       } catch {}
     };
     load();
-    const t = setInterval(load, 300000); // 5분마다 갱신
+    const t = setInterval(load, 300000);
     return () => clearInterval(t);
   }, []);
 
   const fmtTime = (s) => {
     if (!s) return "";
     const t = s.split("T")[1];
-    if (!t) return "종일";
+    if (!t || s.endsWith("T00:00:00")) return "종일";
     return `${t.slice(0, 2)}:${t.slice(3, 5)}`;
   };
 
@@ -229,7 +176,6 @@ function CalendarBadge() {
     return `${d.getMonth() + 1}/${d.getDate()}(${days[d.getDay()]})`;
   };
 
-  // Group week events by date
   const groupByDate = (events) => {
     const groups = {};
     for (const e of events) {
@@ -240,17 +186,40 @@ function CalendarBadge() {
     return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
   };
 
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
+
   return (
     <>
-      <div className="cal-card" style={S.calCard} onClick={() => setShowPopup(true)}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 18 }}>📅</span>
-          <span style={{ fontSize: 15, fontWeight: 700 }}>
-            {new Date().getFullYear()}년 {new Date().getMonth() + 1}월 {new Date().getDate()}일: {cal ? `${cal.todayCount}건` : "..."}
-          </span>
+      <div style={S.scheduleCard}>
+        <div style={S.scheduleHeader} onClick={() => setShowPopup(true)}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 18 }}>📅</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{dateStr} 일정</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#c7d2fe" }}>{cal ? `${cal.todayCount}건` : "..."}</span>
+          </div>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>이번 주 보기 →</span>
         </div>
-        <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
-          {cal?.upcoming ? `다음: ${fmtTime(cal.upcoming.start)} ${cal.upcoming.title.length > 20 ? cal.upcoming.title.slice(0, 20) + "…" : cal.upcoming.title}` : "예정된 일정 없음"}
+
+        <div style={S.scheduleList}>
+          {!cal ? (
+            <div style={{ padding: "20px 0", textAlign: "center", color: "rgba(255,255,255,0.5)", fontSize: 13 }}>일정 불러오는 중...</div>
+          ) : cal.today.length === 0 ? (
+            <div style={{ padding: "20px 0", textAlign: "center", color: "rgba(255,255,255,0.5)", fontSize: 13 }}>오늘 예정된 일정이 없습니다</div>
+          ) : (
+            cal.today.map((e, i) => {
+              const isAllDay = e.start.endsWith("T00:00:00");
+              return (
+                <div key={i} style={S.scheduleItem}>
+                  <div style={S.scheduleTime}>{isAllDay ? "종일" : fmtTime(e.start)}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</div>
+                    {e.location && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>{e.location}</div>}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -258,7 +227,7 @@ function CalendarBadge() {
         <div style={S.overlay} onClick={() => setShowPopup(false)}>
           <div style={S.calPopup} onClick={e => e.stopPropagation()}>
             <div style={S.taskPopupHeader}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>📅 이번 주 일정</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#1a1a2e" }}>📅 이번 주 일정</h3>
               <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "0 24px 16px" }}>
@@ -268,11 +237,11 @@ function CalendarBadge() {
                 groupByDate(cal.week).map(([date, events]) => (
                   <div key={date} style={{ marginTop: 16 }}>
                     <div style={S.calDateHeader}>
-                      <span>{fmtDay(date + "T00:00:00")}</span>
+                      <span style={{ color: "#1a1a2e" }}>{fmtDay(date + "T00:00:00")}</span>
                       <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: 8 }}>{events.length}건</span>
                     </div>
                     {events.map((e, i) => {
-                      const isAllDay = !e.start.includes("T") || e.start.endsWith("T00:00:00");
+                      const isAllDay = e.start.endsWith("T00:00:00");
                       return (
                         <div key={i} style={S.calEvent}>
                           <div style={S.calEventTime}>{isAllDay ? "종일" : fmtTime(e.start)}</div>
@@ -780,8 +749,7 @@ export default function TeamLinkHub() {
             <TodoBanner isAdmin={isAdmin} />
           </div>
           <div style={S.heroRight}>
-            <CalendarBadge />
-            <WeatherWidget />
+            <TodaySchedule />
           </div>
         </div>
       </header>
@@ -1098,8 +1066,6 @@ const CSS = `
   .link-moved { animation: linkFlash 0.6s ease-out; }
   .task-banner { cursor: pointer; transition: background 0.15s; }
   .task-banner:hover { background: rgba(255,255,255,0.18) !important; }
-  .cal-card { cursor: pointer; transition: background 0.15s; }
-  .cal-card:hover { background: rgba(255,255,255,0.22) !important; }
   .ql-actions { position: absolute; top: 4px; right: 4px; display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
   .ql-actions .ql-btn { background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 11px; padding: 2px 5px; }
   div:hover > .ql-actions { opacity: 1; }
@@ -1127,9 +1093,7 @@ const S = {
   taskPopupClose: { background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#9ca3af", padding: "4px 8px", borderRadius: 6 },
   taskIframe: { flex: 1, width: "100%", border: "none" },
 
-  // Calendar
-  calCard: { padding: "12px 20px", background: "rgba(255,255,255,0.1)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", transition: "background 0.15s", whiteSpace: "nowrap" },
-  calDivider: { opacity: 0.3 },
+  // Calendar popup
   calPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
   calDateHeader: { fontSize: 14, fontWeight: 700, color: "#1e1b4b", padding: "8px 0 4px", borderBottom: "1px solid #f0f1f5", marginBottom: 4 },
   calEvent: { display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderBottom: "1px solid #f9fafb" },
@@ -1137,16 +1101,12 @@ const S = {
   todoPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
   weekNavBtn: { background: "none", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 12, color: "#6b7280", fontFamily: "inherit" },
   weekTodayBtn: { background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#4338ca", fontFamily: "inherit" },
-  weatherCard: { background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", borderRadius: 16, padding: "18px 20px", border: "1px solid rgba(255,255,255,0.12)", minWidth: 260, flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" },
-  weatherTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 },
-  weatherMain: { display: "flex", alignItems: "center", gap: 12 },
-  weatherTemp: { fontSize: 32, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.03em" },
-  weatherLabel: { fontSize: 13, opacity: 0.8, marginTop: 2, fontWeight: 500 },
-  weatherMeta: { display: "flex", flexDirection: "column", gap: 4, textAlign: "right", fontSize: 13, fontWeight: 500 },
-  wmi: { display: "flex", gap: 8, justifyContent: "flex-end" },
-  weatherForecast: { display: "flex", justifyContent: "space-between", marginTop: 16, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" },
-  forecastDay: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 },
-  weatherFooter: { display: "flex", justifyContent: "space-between", marginTop: 12, fontSize: 11, opacity: 0.5, fontWeight: 500 },
+  // Schedule card (replaces weather)
+  scheduleCard: { background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.12)", minWidth: 280, overflow: "hidden" },
+  scheduleHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.08)" },
+  scheduleList: { padding: "4px 0", maxHeight: 220, overflowY: "auto" },
+  scheduleItem: { display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 18px" },
+  scheduleTime: { fontSize: 12, fontWeight: 700, color: "#c7d2fe", minWidth: 36, flexShrink: 0, marginTop: 1 },
   twoCol: { maxWidth: 1160, margin: "0 auto", padding: "0 32px 64px", display: "grid", gridTemplateColumns: "1fr 320px", gap: 24, alignItems: "start" },
   mainCol: { minWidth: 0 },
   sideCol: { position: "sticky", top: 24 },
