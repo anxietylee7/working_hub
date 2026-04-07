@@ -242,22 +242,13 @@ function CalendarBadge() {
 
   return (
     <>
-      <div className="cal-badge" style={S.calBadge} onClick={() => setShowPopup(true)}>
-        <span style={{ fontSize: 14 }}>📅</span>
-        {cal ? (
-          <>
-            <span style={{ fontWeight: 600 }}>오늘 {cal.todayCount}건</span>
-            {cal.upcoming && (
-              <>
-                <span style={S.calDivider}>|</span>
-                <span style={{ opacity: 0.8 }}>다음: {fmtTime(cal.upcoming.start)} {cal.upcoming.title.length > 15 ? cal.upcoming.title.slice(0, 15) + "…" : cal.upcoming.title}</span>
-              </>
-            )}
-          </>
-        ) : (
-          <span style={{ opacity: 0.6 }}>일정 불러오는 중...</span>
-        )}
-        <span style={{ fontSize: 11, opacity: 0.5, marginLeft: "auto" }}>상세보기 →</span>
+      <div className="cal-card" style={S.calCard} onClick={() => setShowPopup(true)}>
+        <div style={{ fontSize: 15, fontWeight: 700 }}>
+          {new Date().getFullYear()}년 {new Date().getMonth() + 1}월 {new Date().getDate()}일: {cal ? `${cal.todayCount}건` : "..."}
+        </div>
+        <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
+          {cal?.upcoming ? `다음: ${fmtTime(cal.upcoming.start)} ${cal.upcoming.title.length > 20 ? cal.upcoming.title.slice(0, 20) + "…" : cal.upcoming.title}` : "예정된 일정 없음"}
+        </div>
       </div>
 
       {showPopup && cal && (
@@ -485,10 +476,10 @@ function TodoBanner({ isAdmin }) {
   return (
     <>
       <div className="task-banner" style={{ ...S.taskBanner, marginTop: 6 }} onClick={() => setShowPopup(true)}>
-        <span style={{ fontSize: 16 }}>✅</span>
+        <span style={{ fontSize: 16 }}>🔔</span>
         <div style={S.taskMarquee}>
           <span style={S.taskMarqueeInner}>
-            <span style={{ fontWeight: 700 }}>To Do List</span>
+            <span style={{ fontWeight: 700 }}>LAM TASK 외 주요 이슈</span>
             <span style={S.taskDivider}>|</span>
             {totalCount > 0 ? (
               <>
@@ -499,7 +490,7 @@ function TodoBanner({ isAdmin }) {
                 <span style={{ opacity: 0.6 }}>{weekLabel}</span>
               </>
             ) : (
-              <span style={{ opacity: 0.6 }}>{weekLabel} — 등록된 항목 없음</span>
+              <span style={{ opacity: 0.6 }}>{weekLabel} — 등록된 이슈 없음</span>
             )}
           </span>
         </div>
@@ -511,7 +502,7 @@ function TodoBanner({ isAdmin }) {
           <div style={S.todoPopup} onClick={e => e.stopPropagation()}>
             {/* Header */}
             <div style={S.taskPopupHeader}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>✅ 팀 To Do List</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>🔔 LAM TASK 외 주요 이슈</h3>
               <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
             </div>
 
@@ -551,13 +542,13 @@ function TodoBanner({ isAdmin }) {
                   )}
                 </div>
               ))}
-              {todos.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af", fontSize: 14 }}>이번 주 등록된 할 일이 없습니다</div>}
+              {todos.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af", fontSize: 14 }}>이번 주 등록된 이슈가 없습니다</div>}
             </div>
 
             {/* Add (admin only) */}
             {isAdmin && (
               <div style={{ padding: "16px 24px", borderTop: "1px solid #f0f1f5", display: "flex", gap: 8 }}>
-                <input value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => e.key === "Enter" && addTodo()} placeholder="새 할 일 입력..." style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, fontFamily: "inherit" }} />
+                <input value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => e.key === "Enter" && addTodo()} placeholder="새 이슈 입력..." style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, fontFamily: "inherit" }} />
                 <button onClick={addTodo} disabled={saving} style={{ background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1 }}>추가</button>
               </div>
             )}
@@ -773,9 +764,11 @@ export default function TeamLinkHub() {
             <p style={S.heroDate}>{now.getFullYear()}년 {now.getMonth()+1}월 {now.getDate()}일 ({weekday}) {String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}</p>
             <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
               <h1 style={S.heroTitle}>{greeting} 👋</h1>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
+              <p style={{ ...S.heroSub, margin: 0 }}>선행AI팀 팀 업무에 필요한 모든 링크를 한 곳에서</p>
               <CalendarBadge />
             </div>
-            <p style={S.heroSub}>선행AI팀 팀 업무에 필요한 모든 링크를 한 곳에서</p>
             <div style={{ ...S.searchBox, marginTop: 16 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input style={S.searchInput} placeholder="링크 검색..." value={search} onChange={e => setSearch(e.target.value)} />
@@ -1100,8 +1093,8 @@ const CSS = `
   .link-moved { animation: linkFlash 0.6s ease-out; }
   .task-banner { cursor: pointer; transition: background 0.15s; }
   .task-banner:hover { background: rgba(255,255,255,0.18) !important; }
-  .cal-badge { cursor: pointer; transition: background 0.15s; }
-  .cal-badge:hover { background: rgba(255,255,255,0.22) !important; }
+  .cal-card { cursor: pointer; transition: background 0.15s; }
+  .cal-card:hover { background: rgba(255,255,255,0.22) !important; }
   .ql-actions { position: absolute; top: 4px; right: 4px; display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
   .ql-actions .ql-btn { background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 11px; padding: 2px 5px; }
   div:hover > .ql-actions { opacity: 1; }
@@ -1130,7 +1123,7 @@ const S = {
   taskIframe: { flex: 1, width: "100%", border: "none" },
 
   // Calendar
-  calBadge: { display: "flex", alignItems: "center", gap: 8, padding: "6px 14px", background: "rgba(255,255,255,0.12)", borderRadius: 20, fontSize: 13, color: "#fff", cursor: "pointer", border: "1px solid rgba(255,255,255,0.15)", transition: "background 0.15s", whiteSpace: "nowrap" },
+  calCard: { padding: "12px 20px", background: "rgba(255,255,255,0.1)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", transition: "background 0.15s", whiteSpace: "nowrap" },
   calDivider: { opacity: 0.3 },
   calPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
   calDateHeader: { fontSize: 14, fontWeight: 700, color: "#1e1b4b", padding: "8px 0 4px", borderBottom: "1px solid #f0f1f5", marginBottom: 4 },
