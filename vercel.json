@@ -1,16 +1,5 @@
 {
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
-    },
-    { "src": "api/news.js", "use": "@vercel/node" },
-    { "src": "api/weather.js", "use": "@vercel/node" }
-  ],
-  "routes": [
-    { "src": "/api/news", "dest": "/api/news.js" },
-    { "src": "/api/weather", "dest": "/api/weather.js" },
-    { "src": "/(.*)", "dest": "/$1" }
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
