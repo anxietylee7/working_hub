@@ -102,8 +102,7 @@ function WeatherWidget() {
 // ─── AI News Feed ───
 const NEWS_TABS = [
   { id: "ai", label: "AI 기술" },
-  { id: "llm", label: "LLM" },
-  { id: "industry", label: "산업 동향" },
+  { id: "llm", label: "LLM 서비스" },
 ];
 
 function AINewsFeed() {
