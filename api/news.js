@@ -1,81 +1,152 @@
-const CATEGORY_PROMPTS = {
-  "AI 기술": `오늘 날짜 기준으로 최신 "AI 기술" 관련 뉴스를 웹에서 검색해서 6개를 알려줘.
-
-이 카테고리에 해당하는 뉴스만 포함해:
-- AI 새로운 논문, 연구 결과 발표
-- 새로운 AI 모델 출시 (예: 이미지 생성, 음성 합성, 멀티모달 등)
-- AI 학습 기법, 아키텍처 혁신
-- AI 벤치마크, 성능 비교
-- AI 오픈소스 프로젝트 공개
-
-이 카테고리에 해당하지 않는 뉴스는 제외해:
-- ChatGPT, Claude, Gemini 등 LLM 서비스 업데이트 (→ LLM 서비스 카테고리)
-- AI 투자, 인수합병, 규제 관련 뉴스`,
-
-  "LLM 서비스": `오늘 날짜 기준으로 최신 "LLM 서비스" 관련 뉴스를 웹에서 검색해서 6개를 알려줘.
-
-이 카테고리에 해당하는 뉴스만 포함해:
-- ChatGPT, Claude, Gemini, Llama 등 LLM 서비스 업데이트/신기능
-- LLM API 변경, 가격 정책, 새 모델 버전 출시
-- LLM 기반 제품/서비스 출시 (예: AI 코딩 도구, AI 어시스턴트)
-- LLM 성능 비교, 사용 후기
-- 프롬프트 엔지니어링, RAG 등 LLM 활용 기법
-
-이 카테고리에 해당하지 않는 뉴스는 제외해:
-- 순수 AI 연구/논문 (→ AI 기술 카테고리)
-- AI 투자, 인수합병, 규제 관련 뉴스`,
+const SUPABASE_URL = "https://pyfzeyxcwzecjzeuhehn.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5ZnpleXhjd3plY2p6ZXVoZWhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1MDcwMzUsImV4cCI6MjA5MTA4MzAzNX0.4nwLGVT7fufgQjr8CIhtOk6PreRyxz8BNJY8Kn2v_cU";
+const SB_HEADERS = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  "Content-Type": "application/json",
+  Prefer: "return=representation",
 };
+
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1시간
+
+const CATEGORY_QUERIES = {
+  "AI 기술": "AI+인공지능+딥러닝+모델+논문+연구",
+  "LLM 서비스": "ChatGPT+Claude+Gemini+LLM+GPT",
+};
+
+// Google News RSS에서 뉴스 가져오기
+async function fetchGoogleNews(query) {
+  const encodedQuery = encodeURIComponent(query);
+  const url = `https://news.google.com/rss/search?q=${encodedQuery}&hl=ko&gl=KR&ceid=KR:ko`;
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Google News fetch failed: " + res.status);
+  const xml = await res.text();
+
+  // XML 파싱 (간단한 정규식 기반)
+  const items = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+  let match;
+  while ((match = itemRegex.exec(xml)) !== null && items.length < 6) {
+    const itemXml = match[1];
+    const title = extractTag(itemXml, "title");
+    const link = extractTag(itemXml, "link");
+    const pubDate = extractTag(itemXml, "pubDate");
+    const source = extractTag(itemXml, "source");
+
+    if (title && link) {
+      items.push({
+        rank: items.length + 1,
+        title: decodeHtmlEntities(title),
+        summary: "",
+        source: source ? decodeHtmlEntities(source) : "",
+        url: link,
+        date: pubDate ? formatDate(pubDate) : "",
+      });
+    }
+  }
+
+  return items;
+}
+
+function extractTag(xml, tag) {
+  // CDATA 처리
+  const cdataRegex = new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>`);
+  const cdataMatch = xml.match(cdataRegex);
+  if (cdataMatch) return cdataMatch[1].trim();
+
+  const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`);
+  const m = xml.match(regex);
+  return m ? m[1].trim() : "";
+}
+
+function decodeHtmlEntities(str) {
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'");
+}
+
+function formatDate(dateStr) {
+  try {
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+  } catch {
+    return dateStr;
+  }
+}
+
+// Supabase 캐시 읽기
+async function getCache(cacheId) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/news_cache?id=eq.${cacheId}&select=*`,
+      { headers: SB_HEADERS }
+    );
+    const rows = await res.json();
+    if (rows.length > 0) {
+      const row = rows[0];
+      const age = Date.now() - new Date(row.updated_at).getTime();
+      if (age < CACHE_TTL_MS) {
+        return row.data;
+      }
+    }
+  } catch (e) {
+    console.error("Cache read error:", e);
+  }
+  return null;
+}
+
+// Supabase 캐시 쓰기 (upsert)
+async function setCache(cacheId, data) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/news_cache`, {
+      method: "POST",
+      headers: { ...SB_HEADERS, Prefer: "resolution=merge-duplicates,return=representation" },
+      body: JSON.stringify({
+        id: cacheId,
+        data: data,
+        updated_at: new Date().toISOString(),
+      }),
+    });
+  } catch (e) {
+    console.error("Cache write error:", e);
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: "OPENAI_API_KEY not configured" });
-
   try {
     const body = req.body || {};
     const tab = body.tab || "AI 기술";
-    const categoryPrompt = CATEGORY_PROMPTS[tab] || CATEGORY_PROMPTS["AI 기술"];
+    const force = body.force || false;
+    const cacheId = "news_" + tab.replace(/\s/g, "_");
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + apiKey,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        tools: [{ type: "web_search_preview" }],
-        input: categoryPrompt + "\n\n반드시 아래 JSON 형식만 응답해. 다른 텍스트 없이 JSON 배열만:\n[{\"rank\":1,\"title\":\"뉴스 제목\",\"summary\":\"1줄 요약 (30자 이내)\",\"source\":\"출처명\",\"url\":\"기사URL\",\"date\":\"YYYY.MM.DD\"}]\n\n규칙:\n- 오늘 또는 최근 1주일 내 뉴스만\n- 한국어 뉴스 우선, 없으면 영어 뉴스도 가능\n- URL은 실제 존재하는 기사 링크\n- 6개 뉴스가 서로 겹치지 않도록\n- JSON 외 다른 텍스트 절대 포함하지 마",
-      }),
-    });
-
-    const data = await response.json();
-
-    let text = "";
-    if (data.output) {
-      for (const item of data.output) {
-        if (item.type === "message" && item.content) {
-          for (const block of item.content) {
-            if (block.type === "output_text") text += block.text;
-          }
-        }
+    // 1. 캐시 확인 (force가 아닌 경우)
+    if (!force) {
+      const cached = await getCache(cacheId);
+      if (cached) {
+        return res.status(200).json({ news: cached, cached: true });
       }
     }
 
-    if (!text) {
-      return res.status(500).json({ error: "No response from OpenAI", debug: JSON.stringify(data).slice(0, 500) });
+    // 2. Google News RSS에서 가져오기
+    const query = CATEGORY_QUERIES[tab] || CATEGORY_QUERIES["AI 기술"];
+    const news = await fetchGoogleNews(query);
+
+    if (news.length === 0) {
+      return res.status(500).json({ error: "뉴스를 찾을 수 없습니다" });
     }
 
-    const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    const match = cleaned.match(/\[[\s\S]*\]/);
-    if (!match) {
-      return res.status(500).json({ error: "Failed to parse", debug: text.slice(0, 500) });
-    }
+    // 3. 캐시 저장
+    await setCache(cacheId, news);
 
-    const news = JSON.parse(match[0]).slice(0, 6);
-    return res.status(200).json({ news });
+    return res.status(200).json({ news, cached: false });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
