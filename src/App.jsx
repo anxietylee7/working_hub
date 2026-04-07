@@ -211,9 +211,9 @@ export default function TeamLinkHub() {
   const pwRef = useRef(null);
 
   const QUICK_LINKS = [
-    { title: "선행AI팀 회의록", emoji: "📝", color: "#6366f1", url: "#" },
-    { title: "AI PoC 위키 페이지", emoji: "🧪", color: "#0ea5e9", url: "#" },
-    { title: "AI QA/QC 위키 페이지", emoji: "✅", color: "#10b981", url: "#" },
+    { title: "선행AI팀 회의록", emoji: "📝", color: "#6366f1", url: "https://wiki.sgr.com/pages/viewpage.action?pageId=782666936" },
+    { title: "AI PoC 위키 페이지", emoji: "🧪", color: "#0ea5e9", url: "https://wiki.sgr.com/pages/viewpage.action?pageId=821693544&src=contextnavpagetreemode" },
+    { title: "AI QA/QC 위키 페이지", emoji: "✅", color: "#10b981", url: "https://wiki.sgr.com/pages/viewpage.action?pageId=782666936" },
   ];
 
   const handleLogin = async () => {
