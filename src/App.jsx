@@ -250,7 +250,7 @@ function TaskBanner() {
                 <span style={S.taskDivider}>|</span>
                 <span style={{ opacity: 0.6 }}>총 {stats.total}건</span>
               </>
-            ) : "📋 TASK 현황 불러오는 중..."}
+            ) : "TASK 현황 불러오는 중..."}
           </span>
         </div>
         <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>클릭하여 상세보기 →</span>
@@ -347,7 +347,16 @@ export default function TeamLinkHub() {
   useEffect(() => { fetchAll(); const t = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(t); }, [fetchAll]);
 
   const allLinks = categories.flatMap(c => c.links.map(l => ({ ...l, catName: c.name, catEmoji: c.emoji, catColor: c.color, catId: c.id })));
-  const filtered = search.trim() ? allLinks.filter(l => l.title.toLowerCase().includes(search.toLowerCase()) || l.description?.toLowerCase().includes(search.toLowerCase()) || l.catName?.toLowerCase().includes(search.toLowerCase())) : null;
+  const filtered = search.trim() ? (() => {
+    const q = search.toLowerCase();
+    return allLinks.filter(l =>
+      l.title.toLowerCase().includes(q) ||
+      l.description?.toLowerCase().includes(q) ||
+      l.catName?.toLowerCase().includes(q) ||
+      l.label_text?.toLowerCase().includes(q) ||
+      l.url?.toLowerCase().includes(q)
+    );
+  })() : null;
 
   const moveLink = async (catId, linkId, dir) => {
     const cat = categories.find(c => c.id === catId);
