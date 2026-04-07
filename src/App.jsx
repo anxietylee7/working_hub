@@ -34,48 +34,52 @@ const LINK_ICONS = [
 ];
 
 // ─── Weather ───
-const WMO = {
-  0:{l:"맑음",i:"☀️"},1:{l:"대체로 맑음",i:"🌤️"},2:{l:"구름 조금",i:"⛅"},3:{l:"흐림",i:"☁️"},
-  45:{l:"안개",i:"🌫️"},48:{l:"안개",i:"🌫️"},51:{l:"이슬비",i:"🌦️"},53:{l:"이슬비",i:"🌦️"},55:{l:"이슬비",i:"🌦️"},
-  61:{l:"비",i:"🌧️"},63:{l:"비",i:"🌧️"},65:{l:"폭우",i:"🌧️"},71:{l:"눈",i:"🌨️"},73:{l:"눈",i:"🌨️"},75:{l:"폭설",i:"❄️"},
-  77:{l:"싸락눈",i:"🌨️"},80:{l:"소나기",i:"🌦️"},81:{l:"소나기",i:"🌦️"},82:{l:"강한 소나기",i:"⛈️"},
-  85:{l:"눈보라",i:"🌨️"},86:{l:"눈보라",i:"❄️"},95:{l:"뇌우",i:"⛈️"},96:{l:"우박 뇌우",i:"⛈️"},99:{l:"우박 뇌우",i:"⛈️"},
+const WEATHER_ICONS = {
+  "맑음": "☀️", "대체로 맑음": "🌤️", "구름조금": "⛅", "구름 조금": "⛅",
+  "흐림": "☁️", "안개": "🌫️", "비": "🌧️", "소나기": "🌦️",
+  "눈": "🌨️", "폭설": "❄️", "뇌우": "⛈️",
 };
-const getW = c => WMO[c] || { l:"알 수 없음", i:"🌡️" };
+const getWIcon = (code) => WEATHER_ICONS[code] || "🌡️";
 
 function WeatherWidget() {
   const [w, setW] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [ts, setTs] = useState(null);
   const load = useCallback(async () => {
     try {
       const r = await fetch("/api/weather");
-      setW(await r.json()); setTs(new Date());
+      const data = await r.json();
+      if (data.temp !== undefined) { setW(data); setTs(new Date()); }
     } catch {}
+    setLoading(false);
   }, []);
   useEffect(() => { load(); const t = setInterval(load, 600000); return () => clearInterval(t); }, [load]);
 
-  if (!w?.current) return <div style={S.weatherCard}><span style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{w === null ? "날씨 불러오는 중..." : "날씨 정보 없음"}</span></div>;
-  const c = w.current, d = w.daily, info = getW(c.weather_code);
+  if (!w) return <div style={S.weatherCard}><span style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>{loading ? "날씨 불러오는 중..." : "날씨 정보 없음"}</span></div>;
   return (
     <div style={S.weatherCard}>
       <div style={S.weatherTop}>
         <div style={S.weatherMain}>
-          <span style={{ fontSize: 36, lineHeight: 1 }}>{info.i}</span>
+          <span style={{ fontSize: 36, lineHeight: 1 }}>{getWIcon(w.weather_code)}</span>
           <div>
-            <div style={S.weatherTemp}>{Math.round(c.temperature_2m)}°</div>
-            <div style={S.weatherLabel}>{info.l}</div>
+            <div style={S.weatherTemp}>{w.temp}°</div>
+            <div style={S.weatherLabel}>{w.weather_code}</div>
           </div>
         </div>
         <div style={S.weatherMeta}>
-          <div style={S.wmi}><span style={{ opacity: 0.6 }}>체감</span><span>{Math.round(c.apparent_temperature)}°</span></div>
-          <div style={S.wmi}><span style={{ opacity: 0.6 }}>습도</span><span>{c.relative_humidity_2m}%</span></div>
-          <div style={S.wmi}><span style={{ opacity: 0.6 }}>바람</span><span>{Math.round(c.wind_speed_10m)}km/h</span></div>
+          <div style={S.wmi}><span style={{ opacity: 0.6 }}>체감</span><span>{w.apparent_temp}°</span></div>
+          <div style={S.wmi}><span style={{ opacity: 0.6 }}>습도</span><span>{w.humidity}%</span></div>
+          <div style={S.wmi}><span style={{ opacity: 0.6 }}>바람</span><span>{w.wind_speed}km/h</span></div>
         </div>
       </div>
-      {d && <div style={S.weatherForecast}>
-        {[0,1,2].map(i => { const dt = new Date(d.time[i]); const lb = i===0?"오늘":i===1?"내일":`${dt.getMonth()+1}/${dt.getDate()}`; const fi = getW(d.weather_code[i]); return (
-          <div key={i} style={S.forecastDay}><span style={{ fontSize: 12, opacity: 0.7, fontWeight: 600 }}>{lb}</span><span style={{ fontSize: 18 }}>{fi.i}</span><span style={{ fontSize: 12, fontWeight: 600 }}>{Math.round(d.temperature_2m_max[i])}° / {Math.round(d.temperature_2m_min[i])}°</span></div>
-        );})}
+      {w.forecast && <div style={S.weatherForecast}>
+        {w.forecast.map((f, i) => (
+          <div key={i} style={S.forecastDay}>
+            <span style={{ fontSize: 12, opacity: 0.7, fontWeight: 600 }}>{f.day}</span>
+            <span style={{ fontSize: 18 }}>{getWIcon(f.code)}</span>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>{f.max}° / {f.min}°</span>
+          </div>
+        ))}
       </div>}
       <div style={S.weatherFooter}><span>📍 판교 삼평동</span><span>{ts ? `${ts.getHours()}:${String(ts.getMinutes()).padStart(2,"0")} 업데이트`:""}</span></div>
     </div>
