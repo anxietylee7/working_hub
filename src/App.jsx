@@ -197,6 +197,109 @@ function AINewsFeed() {
   );
 }
 
+// ─── Calendar Badge ───
+function CalendarBadge() {
+  const [cal, setCal] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const r = await fetch("/api/calendar");
+        const data = await r.json();
+        if (data.today) setCal(data);
+      } catch {}
+    };
+    load();
+    const t = setInterval(load, 300000); // 5분마다 갱신
+    return () => clearInterval(t);
+  }, []);
+
+  const fmtTime = (s) => {
+    if (!s) return "";
+    const t = s.split("T")[1];
+    if (!t) return "종일";
+    return `${t.slice(0, 2)}:${t.slice(3, 5)}`;
+  };
+
+  const fmtDay = (s) => {
+    if (!s) return "";
+    const d = new Date(s);
+    const days = ["일", "월", "화", "수", "목", "금", "토"];
+    return `${d.getMonth() + 1}/${d.getDate()}(${days[d.getDay()]})`;
+  };
+
+  // Group week events by date
+  const groupByDate = (events) => {
+    const groups = {};
+    for (const e of events) {
+      const date = e.start.split("T")[0];
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(e);
+    }
+    return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
+  };
+
+  return (
+    <>
+      <div className="cal-badge" style={S.calBadge} onClick={() => setShowPopup(true)}>
+        <span style={{ fontSize: 14 }}>📅</span>
+        {cal ? (
+          <>
+            <span style={{ fontWeight: 600 }}>오늘 {cal.todayCount}건</span>
+            {cal.upcoming && (
+              <>
+                <span style={S.calDivider}>|</span>
+                <span style={{ opacity: 0.8 }}>다음: {fmtTime(cal.upcoming.start)} {cal.upcoming.title.length > 15 ? cal.upcoming.title.slice(0, 15) + "…" : cal.upcoming.title}</span>
+              </>
+            )}
+          </>
+        ) : (
+          <span style={{ opacity: 0.6 }}>일정 불러오는 중...</span>
+        )}
+        <span style={{ fontSize: 11, opacity: 0.5, marginLeft: "auto" }}>상세보기 →</span>
+      </div>
+
+      {showPopup && cal && (
+        <div style={S.overlay} onClick={() => setShowPopup(false)}>
+          <div style={S.calPopup} onClick={e => e.stopPropagation()}>
+            <div style={S.taskPopupHeader}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>📅 이번 주 일정</h3>
+              <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "0 24px 16px" }}>
+              {cal.week.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af", fontSize: 14 }}>이번 주 일정이 없습니다</div>
+              ) : (
+                groupByDate(cal.week).map(([date, events]) => (
+                  <div key={date} style={{ marginTop: 16 }}>
+                    <div style={S.calDateHeader}>
+                      <span>{fmtDay(date + "T00:00:00")}</span>
+                      <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: 8 }}>{events.length}건</span>
+                    </div>
+                    {events.map((e, i) => {
+                      const isAllDay = !e.start.includes("T") || e.start.endsWith("T00:00:00");
+                      return (
+                        <div key={i} style={S.calEvent}>
+                          <div style={S.calEventTime}>{isAllDay ? "종일" : fmtTime(e.start)}</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>{e.title}</div>
+                            {e.location && <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>{e.location}</div>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ─── Task Banner ───
 function getWeekInfo() {
   const now = new Date();
@@ -668,7 +771,10 @@ export default function TeamLinkHub() {
         <div style={S.heroInner}>
           <div style={S.heroLeft}>
             <p style={S.heroDate}>{now.getFullYear()}년 {now.getMonth()+1}월 {now.getDate()}일 ({weekday}) {String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}</p>
-            <h1 style={S.heroTitle}>{greeting} 👋</h1>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+              <h1 style={S.heroTitle}>{greeting} 👋</h1>
+              <CalendarBadge />
+            </div>
             <p style={S.heroSub}>선행AI팀 팀 업무에 필요한 모든 링크를 한 곳에서</p>
             <div style={{ ...S.searchBox, marginTop: 16 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -994,6 +1100,8 @@ const CSS = `
   .link-moved { animation: linkFlash 0.6s ease-out; }
   .task-banner { cursor: pointer; transition: background 0.15s; }
   .task-banner:hover { background: rgba(255,255,255,0.18) !important; }
+  .cal-badge { cursor: pointer; transition: background 0.15s; }
+  .cal-badge:hover { background: rgba(255,255,255,0.22) !important; }
   .ql-actions { position: absolute; top: 4px; right: 4px; display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
   .ql-actions .ql-btn { background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 11px; padding: 2px 5px; }
   div:hover > .ql-actions { opacity: 1; }
@@ -1020,6 +1128,14 @@ const S = {
   taskPopupHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #f0f1f5" },
   taskPopupClose: { background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#9ca3af", padding: "4px 8px", borderRadius: 6 },
   taskIframe: { flex: 1, width: "100%", border: "none" },
+
+  // Calendar
+  calBadge: { display: "flex", alignItems: "center", gap: 8, padding: "6px 14px", background: "rgba(255,255,255,0.12)", borderRadius: 20, fontSize: 13, color: "#fff", cursor: "pointer", border: "1px solid rgba(255,255,255,0.15)", transition: "background 0.15s", whiteSpace: "nowrap" },
+  calDivider: { opacity: 0.3 },
+  calPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
+  calDateHeader: { fontSize: 14, fontWeight: 700, color: "#1e1b4b", padding: "8px 0 4px", borderBottom: "1px solid #f0f1f5", marginBottom: 4 },
+  calEvent: { display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderBottom: "1px solid #f9fafb" },
+  calEventTime: { fontSize: 13, fontWeight: 600, color: "#6366f1", minWidth: 44, flexShrink: 0 },
   todoPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
   weekNavBtn: { background: "none", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 12, color: "#6b7280", fontFamily: "inherit" },
   weekTodayBtn: { background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#4338ca", fontFamily: "inherit" },
