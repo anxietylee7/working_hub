@@ -275,6 +275,141 @@ function TaskBanner() {
   );
 }
 
+// ─── Todo Banner ───
+function TodoBanner({ isAdmin }) {
+  const [todos, setTodos] = useState([]);
+  const [showPopup, setShowPopup] = useState(false);
+  const [newText, setNewText] = useState("");
+  const [editId, setEditId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const r = await sbGet("todos", "order=sort_order.asc,created_at.asc");
+      setTodos(r);
+    } catch {}
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const doneCount = todos.filter(t => t.done).length;
+  const totalCount = todos.length;
+  const pendingCount = totalCount - doneCount;
+
+  const addTodo = async () => {
+    if (!newText.trim()) return;
+    setSaving(true);
+    try {
+      await sbPost("todos", { id: `todo-${uid()}`, text: newText.trim(), done: false, sort_order: todos.length });
+      setNewText("");
+      await load();
+    } catch (e) { alert("추가 실패: " + e.message); }
+    setSaving(false);
+  };
+
+  const toggleTodo = async (id, done) => {
+    try {
+      await sbPatch("todos", id, { done: !done });
+      setTodos(prev => prev.map(t => t.id === id ? { ...t, done: !done } : t));
+    } catch {}
+  };
+
+  const deleteTodo = async (id) => {
+    try {
+      await sbDelete("todos", id);
+      setTodos(prev => prev.filter(t => t.id !== id));
+    } catch {}
+  };
+
+  const saveEdit = async (id) => {
+    if (!editText.trim()) return;
+    try {
+      await sbPatch("todos", id, { text: editText.trim() });
+      setTodos(prev => prev.map(t => t.id === id ? { ...t, text: editText.trim() } : t));
+      setEditId(null);
+    } catch {}
+  };
+
+  return (
+    <>
+      <div className="task-banner" style={{ ...S.taskBanner, marginTop: 6 }} onClick={() => setShowPopup(true)}>
+        <span style={{ fontSize: 16 }}>✅</span>
+        <div style={S.taskMarquee}>
+          <span style={S.taskMarqueeInner}>
+            <span style={{ fontWeight: 700 }}>To Do List</span>
+            <span style={S.taskDivider}>|</span>
+            {totalCount > 0 ? (
+              <>
+                <span style={{ color: "#f59e0b" }}>미완료 {pendingCount}건</span>
+                <span style={S.taskDivider}>·</span>
+                <span style={{ color: "#10b981" }}>완료 {doneCount}건</span>
+                <span style={S.taskDivider}>|</span>
+                <span style={{ opacity: 0.6 }}>총 {totalCount}건</span>
+              </>
+            ) : (
+              <span style={{ opacity: 0.6 }}>등록된 항목 없음</span>
+            )}
+          </span>
+        </div>
+        <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>클릭하여 상세보기 →</span>
+      </div>
+
+      {showPopup && (
+        <div style={S.overlay} onClick={() => setShowPopup(false)}>
+          <div style={S.todoPopup} onClick={e => e.stopPropagation()}>
+            <div style={S.taskPopupHeader}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>✅ 팀 To Do List</h3>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 13, color: "#9ca3af" }}>{doneCount}/{totalCount} 완료</span>
+                <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div style={{ padding: "0 24px 16px" }}>
+              <div style={{ height: 6, background: "#f0f1f5", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: totalCount > 0 ? `${(doneCount / totalCount) * 100}%` : "0%", background: "linear-gradient(90deg, #10b981, #34d399)", borderRadius: 3, transition: "width 0.3s" }} />
+              </div>
+            </div>
+
+            {/* Todo list */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "0 24px" }}>
+              {todos.map(t => (
+                <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid #f5f5f5" }}>
+                  <button onClick={() => isAdmin ? toggleTodo(t.id, t.done) : null} style={{ width: 22, height: 22, borderRadius: 6, border: t.done ? "none" : "2px solid #d1d5db", background: t.done ? "#10b981" : "#fff", cursor: isAdmin ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 12, color: "#fff" }}>
+                    {t.done && "✓"}
+                  </button>
+                  {editId === t.id ? (
+                    <input value={editText} onChange={e => setEditText(e.target.value)} onKeyDown={e => e.key === "Enter" && saveEdit(t.id)} onBlur={() => saveEdit(t.id)} autoFocus style={{ flex: 1, padding: "6px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 14, fontFamily: "inherit" }} />
+                  ) : (
+                    <span style={{ flex: 1, fontSize: 14, textDecoration: t.done ? "line-through" : "none", color: t.done ? "#9ca3af" : "#1a1a2e" }}>{t.text}</span>
+                  )}
+                  {isAdmin && (
+                    <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                      <button onClick={() => { setEditId(t.id); setEditText(t.text); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, padding: "4px", borderRadius: 4 }}>✏️</button>
+                      <button onClick={() => deleteTodo(t.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, padding: "4px", borderRadius: 4 }}>🗑️</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {todos.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af", fontSize: 14 }}>등록된 할 일이 없습니다</div>}
+            </div>
+
+            {/* Add new todo (admin only) */}
+            {isAdmin && (
+              <div style={{ padding: "16px 24px", borderTop: "1px solid #f0f1f5", display: "flex", gap: 8 }}>
+                <input value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => e.key === "Enter" && addTodo()} placeholder="새 할 일 입력..." style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, fontFamily: "inherit" }} />
+                <button onClick={addTodo} disabled={saving} style={{ background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1 }}>추가</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 // ─── Main ───
 export default function TeamLinkHub() {
   const [categories, setCategories] = useState([]);
@@ -486,6 +621,7 @@ export default function TeamLinkHub() {
               {search && <button style={S.clearBtn} onClick={() => setSearch("")}>✕</button>}
             </div>
             <TaskBanner />
+            <TodoBanner isAdmin={isAdmin} />
           </div>
           <div style={S.heroRight}><WeatherWidget /></div>
         </div>
@@ -829,6 +965,7 @@ const S = {
   taskPopupHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #f0f1f5" },
   taskPopupClose: { background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#9ca3af", padding: "4px 8px", borderRadius: 6 },
   taskIframe: { flex: 1, width: "100%", border: "none" },
+  todoPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
   weatherCard: { background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", borderRadius: 16, padding: "18px 20px", border: "1px solid rgba(255,255,255,0.12)", minWidth: 260 },
   weatherTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 },
   weatherMain: { display: "flex", alignItems: "center", gap: 12 },
