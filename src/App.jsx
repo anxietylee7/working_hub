@@ -206,8 +206,15 @@ export default function TeamLinkHub() {
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem("admin") === "true");
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [activeTab, setActiveTab] = useState(null);
   const formRef = useRef(null);
   const pwRef = useRef(null);
+
+  const QUICK_LINKS = [
+    { title: "선행AI팀 회의록", emoji: "📝", color: "#6366f1", url: "#" },
+    { title: "AI PoC 위키 페이지", emoji: "🧪", color: "#0ea5e9", url: "#" },
+    { title: "AI QA/QC 위키 페이지", emoji: "✅", color: "#10b981", url: "#" },
+  ];
 
   const handleLogin = async () => {
     const pw = pwRef.current?.value;
@@ -244,6 +251,7 @@ export default function TeamLinkHub() {
         sbGet("links", "order=sort_order.asc,created_at.asc"),
       ]);
       setCategories(cats.map(c => ({ ...c, links: links.filter(l => l.category_id === c.id) })));
+      if (!activeTab && cats.length > 0) setActiveTab(cats[0].id);
     } catch (e) { console.error("Fetch error:", e); }
     setLoaded(true);
   }, []);
@@ -265,6 +273,18 @@ export default function TeamLinkHub() {
     try {
       await Promise.all(reordered.map((l, i) => sbPatch("links", l.id, { sort_order: i })));
     } catch (e) { console.error("Reorder error:", e); await fetchAll(); }
+  };
+
+  const moveCat = async (catId, dir) => {
+    const idx = categories.findIndex(c => c.id === catId);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= categories.length) return;
+    const reordered = [...categories];
+    [reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]];
+    setCategories(reordered);
+    try {
+      await Promise.all(reordered.map((c, i) => sbPatch("categories", c.id, { sort_order: i })));
+    } catch (e) { console.error("Cat reorder error:", e); await fetchAll(); }
   };
 
   const handleSubmit = async () => {
@@ -374,37 +394,76 @@ export default function TeamLinkHub() {
               )}
             </div>
           ) : (
-            <div style={S.catGrid}>
-              {categories.map(cat => (
-                <div key={cat.id} className="cat-card" style={S.catCard}>
-                  <div style={{ ...S.catHeader, background: `linear-gradient(135deg, ${cat.color}, ${cat.color}cc)` }}>
-                    <div style={S.catHeaderLeft}>
-                      <span style={S.catEmoji}>{cat.emoji}</span>
-                      <div><h2 style={S.catName}>{cat.name}</h2><span style={S.catCount}>{cat.links.length}개 링크</span></div>
+            <>
+              {/* Quick Links */}
+              <div style={S.quickLinks}>
+                {QUICK_LINKS.map((ql, i) => (
+                  <a key={i} href={ql.url} target="_blank" rel="noopener noreferrer" className="quick-link" style={{ ...S.quickLink, borderLeft: `4px solid ${ql.color}` }}>
+                    <span style={{ fontSize: 20 }}>{ql.emoji}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "#1a1a2e" }}>{ql.title}</span>
+                    <svg style={{ marginLeft: "auto", opacity: 0.3 }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={ql.color} strokeWidth="2.5" strokeLinecap="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                  </a>
+                ))}
+              </div>
+
+              {/* Category Tabs */}
+              <div style={S.catTabBar}>
+                <div style={S.catTabList}>
+                  {categories.map((cat, idx) => (
+                    <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      {isAdmin && idx > 0 && <button style={S.catMoveBtn} onClick={() => moveCat(cat.id, -1)} title="왼쪽으로">◀</button>}
+                      <button
+                        onClick={() => setActiveTab(cat.id)}
+                        style={{ ...S.catTab, ...(activeTab === cat.id ? { ...S.catTabActive, borderBottomColor: cat.color, color: cat.color } : {}) }}
+                      >
+                        <span>{cat.emoji}</span> {cat.name}
+                        <span style={{ fontSize: 11, opacity: 0.6, marginLeft: 4 }}>{cat.links.length}</span>
+                      </button>
+                      {isAdmin && idx < categories.length - 1 && <button style={S.catMoveBtn} onClick={() => moveCat(cat.id, 1)} title="오른쪽으로">▶</button>}
                     </div>
-                    {isAdmin && <div style={S.catActions}>
-                      <button className="cat-action" onClick={() => setModal({ type: "category", item: cat })}>✏️</button>
-                      <button className="cat-action" onClick={() => setDeleteConfirm({ type: "category", id: cat.id, title: cat.name })}>🗑️</button>
-                    </div>}
-                  </div>
-                  <div style={S.catBody}>
-                    {cat.links.map((l, idx) => (
-                      <LinkCard key={l.id} link={l} color={cat.color}
-                        isAdmin={isAdmin}
-                        onEdit={() => setModal({ type: "link", catId: cat.id, item: l })}
-                        onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })}
-                        onMoveUp={idx > 0 ? () => moveLink(cat.id, l.id, -1) : null}
-                        onMoveDown={idx < cat.links.length - 1 ? () => moveLink(cat.id, l.id, 1) : null}
-                      />
-                    ))}
-                    {isAdmin && <button style={{ ...S.addLinkRow, borderColor: `${cat.color}33`, color: cat.color }} onClick={() => setModal({ type: "link", catId: cat.id })}>
-                      <span style={{ fontSize: 20, lineHeight: 1 }}>+</span> 링크 추가
-                    </button>}
-                  </div>
+                  ))}
+                  {isAdmin && <button style={S.catTabAdd} onClick={() => setModal({ type: "category" })}>+ 추가</button>}
                 </div>
-              ))}
-              {categories.length === 0 && <div style={S.emptyState}><div style={{ fontSize: 48, marginBottom: 12 }}>🔗</div><p style={{ fontWeight: 600 }}>카테고리를 추가해서 시작하세요</p></div>}
-            </div>
+              </div>
+
+              {/* Active Category Content */}
+              {(() => {
+                const cat = categories.find(c => c.id === activeTab);
+                if (!cat) return categories.length === 0 ? (
+                  <div style={S.emptyState}><div style={{ fontSize: 48, marginBottom: 12 }}>🔗</div><p style={{ fontWeight: 600 }}>카테고리를 추가해서 시작하세요</p></div>
+                ) : null;
+                return (
+                  <div style={S.catCard}>
+                    <div style={{ ...S.catContentHeader, borderLeftColor: cat.color }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 22 }}>{cat.emoji}</span>
+                        <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{cat.name}</h2>
+                        <span style={{ fontSize: 12, color: "#9ca3af" }}>{cat.links.length}개 링크</span>
+                      </div>
+                      {isAdmin && <div style={S.catActions}>
+                        <button className="cat-action-light" onClick={() => setModal({ type: "category", item: cat })}>✏️</button>
+                        <button className="cat-action-light" onClick={() => setDeleteConfirm({ type: "category", id: cat.id, title: cat.name })}>🗑️</button>
+                      </div>}
+                    </div>
+                    <div style={S.catBody}>
+                      {cat.links.map((l, idx) => (
+                        <LinkCard key={l.id} link={l} color={cat.color}
+                          isAdmin={isAdmin}
+                          onEdit={() => setModal({ type: "link", catId: cat.id, item: l })}
+                          onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })}
+                          onMoveUp={idx > 0 ? () => moveLink(cat.id, l.id, -1) : null}
+                          onMoveDown={idx < cat.links.length - 1 ? () => moveLink(cat.id, l.id, 1) : null}
+                        />
+                      ))}
+                      {cat.links.length === 0 && <div style={{ textAlign: "center", padding: "24px 0", color: "#9ca3af", fontSize: 14 }}>링크를 추가해보세요</div>}
+                      {isAdmin && <button style={{ ...S.addLinkRow, borderColor: `${cat.color}33`, color: cat.color }} onClick={() => setModal({ type: "link", catId: cat.id })}>
+                        <span style={{ fontSize: 20, lineHeight: 1 }}>+</span> 링크 추가
+                      </button>}
+                    </div>
+                  </div>
+                );
+              })()}
+            </>
           )}
         </main>
 
@@ -548,6 +607,11 @@ const CSS = `
   .cat-action { background: rgba(255,255,255,0.2); border: none; cursor: pointer; font-size: 13px; padding: 4px 7px; border-radius: 6px; opacity: 0; transition: opacity 0.15s, background 0.15s; }
   .cat-action:hover { background: rgba(255,255,255,0.35); }
   .cat-card:hover .cat-action { opacity: 1; }
+  .cat-action-light { background: none; border: none; cursor: pointer; font-size: 13px; padding: 4px 7px; border-radius: 6px; opacity: 0; transition: opacity 0.15s, background 0.15s; color: #6b7280; }
+  .cat-action-light:hover { background: #f3f4f6; }
+  .cat-card:hover .cat-action-light { opacity: 1; }
+  .quick-link { text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; }
+  .quick-link:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important; }
   input:focus { outline: none; border-color: #6366f1 !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.15) !important; }
   input[type="radio"]:checked + .color-dot { border-color: #1a1a2e !important; }
   .icon-dot {
@@ -597,13 +661,22 @@ const S = {
   searchLabel: { fontSize: 14, color: "#6b7280", marginBottom: 16 },
   emptyState: { textAlign: "center", padding: 60, color: "#9ca3af" },
   listWrap: { background: "#fff", borderRadius: 14, padding: 8, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
+
+  // Quick links
+  quickLinks: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 16 },
+  quickLink: { display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "#fff", borderRadius: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", cursor: "pointer" },
+
+  // Category tabs
+  catTabBar: { marginBottom: 16, overflowX: "auto" },
+  catTabList: { display: "flex", alignItems: "center", gap: 4, borderBottom: "2px solid #e5e7eb", paddingBottom: 0 },
+  catTab: { display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", background: "none", border: "none", borderBottom: "3px solid transparent", marginBottom: -2, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#9ca3af", transition: "all 0.15s", whiteSpace: "nowrap" },
+  catTabActive: { color: "#1e1b4b", borderBottomColor: "#6366f1" },
+  catTabAdd: { padding: "8px 14px", background: "none", border: "1px dashed #d1d5db", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#9ca3af", marginLeft: 4, whiteSpace: "nowrap" },
+  catMoveBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 10, color: "#9ca3af", padding: "2px", opacity: 0.5, transition: "opacity 0.15s" },
+
   catGrid: { display: "flex", flexDirection: "column", gap: 20 },
   catCard: { background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)" },
-  catHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", color: "#fff" },
-  catHeaderLeft: { display: "flex", alignItems: "center", gap: 14 },
-  catEmoji: { fontSize: 28, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.15))" },
-  catName: { fontSize: 17, fontWeight: 700 },
-  catCount: { fontSize: 12, opacity: 0.8, fontWeight: 500 },
+  catContentHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderLeft: "4px solid #6366f1" },
   catActions: { display: "flex", gap: 4 },
   catBody: { padding: 8, display: "flex", flexDirection: "column", gap: 2 },
   linkRow: { display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderRadius: 12, cursor: "pointer" },
