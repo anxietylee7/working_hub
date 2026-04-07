@@ -190,7 +190,39 @@ export default function TeamLinkHub() {
   const [search, setSearch] = useState("");
   const [now, setNow] = useState(new Date());
   const [saving, setSaving] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem("admin") === "true");
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginError, setLoginError] = useState("");
   const formRef = useRef(null);
+  const pwRef = useRef(null);
+
+  const handleLogin = async () => {
+    const pw = pwRef.current?.value;
+    if (!pw) return;
+    setLoginError("");
+    try {
+      const r = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw }),
+      });
+      const data = await r.json();
+      if (data.ok) {
+        setIsAdmin(true);
+        sessionStorage.setItem("admin", "true");
+        setShowLogin(false);
+      } else {
+        setLoginError(data.error || "비밀번호가 틀렸습니다");
+      }
+    } catch {
+      setLoginError("인증 서버 오류");
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAdmin(false);
+    sessionStorage.removeItem("admin");
+  };
 
   const fetchAll = useCallback(async () => {
     try {
@@ -306,16 +338,23 @@ export default function TeamLinkHub() {
             <div style={S.statItem}><span style={S.statNum}>{allLinks.length}</span><span style={S.statLabel}>전체 링크</span></div>
             <div style={{ flex: 1 }} />
             <button style={S.refreshBtn} onClick={fetchAll} title="새로고침">🔄</button>
-            <button style={S.addCatBtn} onClick={() => setModal({ type: "category" })}>
-              <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> 카테고리 추가
-            </button>
+            {isAdmin ? (
+              <>
+                <button style={S.addCatBtn} onClick={() => setModal({ type: "category" })}>
+                  <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> 카테고리 추가
+                </button>
+                <button style={S.logoutBtn} onClick={handleLogout} title="관리자 로그아웃">🔓 관리자</button>
+              </>
+            ) : (
+              <button style={S.loginBtn} onClick={() => setShowLogin(true)} title="관리자 로그인">🔒 관리자</button>
+            )}
           </div>
 
           {filtered !== null ? (
             <div>
               <p style={S.searchLabel}>"{search}" 검색 결과 <strong>{filtered.length}</strong>건</p>
               {filtered.length === 0 ? <div style={S.emptyState}>검색 결과가 없습니다</div> : (
-                <div style={S.listWrap}>{filtered.map(l => <LinkCard key={l.id} link={l} color={l.catColor} badge={`${l.catEmoji} ${l.catName}`} onEdit={() => { setSearch(""); setModal({ type: "link", catId: l.catId, item: l }); }} onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })} />)}</div>
+                <div style={S.listWrap}>{filtered.map(l => <LinkCard key={l.id} link={l} color={l.catColor} badge={`${l.catEmoji} ${l.catName}`} isAdmin={isAdmin} onEdit={() => { setSearch(""); setModal({ type: "link", catId: l.catId, item: l }); }} onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })} />)}</div>
               )}
             </div>
           ) : (
@@ -327,23 +366,24 @@ export default function TeamLinkHub() {
                       <span style={S.catEmoji}>{cat.emoji}</span>
                       <div><h2 style={S.catName}>{cat.name}</h2><span style={S.catCount}>{cat.links.length}개 링크</span></div>
                     </div>
-                    <div style={S.catActions}>
+                    {isAdmin && <div style={S.catActions}>
                       <button className="cat-action" onClick={() => setModal({ type: "category", item: cat })}>✏️</button>
                       <button className="cat-action" onClick={() => setDeleteConfirm({ type: "category", id: cat.id, title: cat.name })}>🗑️</button>
-                    </div>
+                    </div>}
                   </div>
                   <div style={S.catBody}>
                     {cat.links.map((l, idx) => (
                       <LinkCard key={l.id} link={l} color={cat.color}
+                        isAdmin={isAdmin}
                         onEdit={() => setModal({ type: "link", catId: cat.id, item: l })}
                         onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })}
                         onMoveUp={idx > 0 ? () => moveLink(cat.id, l.id, -1) : null}
                         onMoveDown={idx < cat.links.length - 1 ? () => moveLink(cat.id, l.id, 1) : null}
                       />
                     ))}
-                    <button style={{ ...S.addLinkRow, borderColor: `${cat.color}33`, color: cat.color }} onClick={() => setModal({ type: "link", catId: cat.id })}>
+                    {isAdmin && <button style={{ ...S.addLinkRow, borderColor: `${cat.color}33`, color: cat.color }} onClick={() => setModal({ type: "link", catId: cat.id })}>
                       <span style={{ fontSize: 20, lineHeight: 1 }}>+</span> 링크 추가
-                    </button>
+                    </button>}
                   </div>
                 </div>
               ))}
@@ -413,11 +453,26 @@ export default function TeamLinkHub() {
           </div>
         </div>
       )}
+
+      {showLogin && (
+        <div style={S.overlay} onClick={() => setShowLogin(false)}>
+          <div style={S.modal} onClick={e => e.stopPropagation()}>
+            <h3 style={S.modalTitle}>🔒 관리자 로그인</h3>
+            <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 16 }}>수정/삭제 권한을 위해 비밀번호를 입력하세요</p>
+            <input ref={pwRef} type="password" style={S.input} placeholder="비밀번호 입력" onKeyDown={e => e.key === "Enter" && handleLogin()} autoFocus />
+            {loginError && <p style={{ fontSize: 13, color: "#ef4444", marginTop: 8 }}>{loginError}</p>}
+            <div style={S.modalActions}>
+              <button style={S.cancelBtn} onClick={() => setShowLogin(false)}>취소</button>
+              <button style={S.saveBtn} onClick={handleLogin}>로그인</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function LinkCard({ link, color, badge, onEdit, onDelete, onMoveUp, onMoveDown }) {
+function LinkCard({ link, color, badge, isAdmin, onEdit, onDelete, onMoveUp, onMoveDown }) {
   const domain = (() => { try { return new URL(link.url).hostname.replace("www.", ""); } catch { return ""; } })();
   const hasIcon = link.icon && link.icon.trim();
   return (
@@ -431,12 +486,12 @@ function LinkCard({ link, color, badge, onEdit, onDelete, onMoveUp, onMoveDown }
       </div>
       <div style={S.linkInfo}><span style={S.linkTitle}>{link.title}</span><span style={S.linkDesc}>{link.description || domain}</span></div>
       {badge && <span style={{ ...S.linkBadge, background: `${color}12`, color }}>{badge}</span>}
-      <div style={S.linkActions} onClick={e => e.preventDefault()}>
+      {isAdmin && <div style={S.linkActions} onClick={e => e.preventDefault()}>
         {onMoveUp && <button className="link-action" onClick={onMoveUp} title="위로">▲</button>}
         {onMoveDown && <button className="link-action" onClick={onMoveDown} title="아래로">▼</button>}
         <button className="link-action" onClick={onEdit}>✏️</button>
         <button className="link-action" onClick={onDelete}>🗑️</button>
-      </div>
+      </div>}
       <svg style={{ flexShrink: 0, opacity: 0.3 }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
     </a>
   );
@@ -546,4 +601,6 @@ const S = {
   modalActions: { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 },
   cancelBtn: { background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 10, padding: "9px 20px", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", color: "#374151" },
   saveBtn: { background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 10, padding: "9px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
+  loginBtn: { display: "flex", alignItems: "center", gap: 4, background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 10, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#6b7280", transition: "all 0.15s" },
+  logoutBtn: { display: "flex", alignItems: "center", gap: 4, background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: 10, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#4338ca", transition: "all 0.15s" },
 };
