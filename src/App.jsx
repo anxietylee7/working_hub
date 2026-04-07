@@ -205,7 +205,7 @@ export default function TeamLinkHub() {
           <div style={S.heroLeft}>
             <p style={S.heroDate}>{now.getFullYear()}년 {now.getMonth()+1}월 {now.getDate()}일 ({weekday})</p>
             <h1 style={S.heroTitle}>{greeting} 👋</h1>
-            <p style={S.heroSub}>선행 AI팀 팀 업무에 필요한 모든 링크를 한 곳에서</p>
+            <p style={S.heroSub}>선행AI팀 팀 업무에 필요한 모든 링크를 한 곳에서</p>
             <div style={{ ...S.searchBox, marginTop: 16 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input style={S.searchInput} placeholder="링크 검색..." value={search} onChange={e => setSearch(e.target.value)} />
