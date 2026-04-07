@@ -116,28 +116,32 @@ function AINewsFeed() {
     setLoading(true);
     setError(null);
     try {
-      const category = NEWS_TABS.find(t => t.id === tabId)?.label || "AI 기술";
+      const tabLabel = NEWS_TABS.find(t => t.id === tabId)?.label || "AI 기술";
       const r = await fetch("/api/news", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category }),
+        body: JSON.stringify({ tab: tabLabel, force }),
       });
-      if (!r.ok) {
-        const err = await r.json();
-        throw new Error(err.detail || err.error || "API 오류");
-      }
       const data = await r.json();
-      setNews(prev => ({ ...prev, [tabId]: data.news || [] }));
+      if (!r.ok) throw new Error(data.error || "API 오류");
+      if (data.news?.length) {
+        setNews(prev => ({ ...prev, [tabId]: data.news }));
+      } else {
+        throw new Error("뉴스를 찾을 수 없습니다");
+      }
     } catch (e) {
       console.error("News fetch error:", e);
-      setError("뉴스를 불러올 수 없습니다");
+      setError(e.message || "뉴스를 불러올 수 없습니다");
     }
     setLoading(false);
   }, [news]);
 
   useEffect(() => { fetchNews(tab); }, [tab]);
 
-  const refreshTab = () => fetchNews(tab, true);
+  const refreshTab = () => {
+    setNews(prev => { const n = { ...prev }; delete n[tab]; return n; });
+    fetchNews(tab, true);
+  };
   const currentNews = news[tab] || [];
 
   return (
