@@ -4,15 +4,29 @@ export default async function handler(req, res) {
   const ICS_URL = "https://outlook.office365.com/owa/calendar/9bb369c087514f938c3e6af3fac656a9@smilegate.com/d49b9a1bab324e7bbd6a761f6ce8f6628415992148646106780/calendar.ics";
 
   try {
-    const r = await fetch(ICS_URL, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; LinkHub/1.0)" },
-    });
+    // Retry up to 2 times
+    let text = "";
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const r = await fetch(ICS_URL, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/calendar, text/plain, */*",
+        },
+      });
 
-    if (!r.ok) throw new Error("ICS fetch failed: " + r.status);
-    let text = await r.text();
+      if (!r.ok) {
+        if (attempt === 1) throw new Error("ICS fetch failed: " + r.status);
+        continue;
+      }
+      text = await r.text();
+      if (text.includes("BEGIN:VCALENDAR")) break;
+      if (attempt === 1) {
+        return res.status(500).json({ error: "Invalid ICS data", preview: text.slice(0, 200) });
+      }
+    }
 
     if (!text.includes("BEGIN:VCALENDAR")) {
-      return res.status(500).json({ error: "Invalid ICS data" });
+      return res.status(500).json({ error: "Invalid ICS data after retries" });
     }
 
     text = text.replace(/\r\n[ \t]/g, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
