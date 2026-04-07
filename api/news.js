@@ -7,114 +7,121 @@ const SB_HEADERS = {
   Prefer: "return=representation",
 };
 
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1시간
+const CACHE_TTL_MS = 60 * 60 * 1000;
 
 const CATEGORY_QUERIES = {
-  "AI 기술": "AI+인공지능+딥러닝+모델+논문+연구",
-  "LLM 서비스": "ChatGPT+Claude+Gemini+LLM+GPT",
+  "AI 기술": ["AI 딥러닝 모델 연구", "인공지능 논문 신기술"],
+  "LLM 서비스": ["ChatGPT Claude Gemini LLM", "GPT AI 서비스 업데이트"],
 };
 
-// Google News RSS에서 뉴스 가져오기
-async function fetchGoogleNews(query) {
-  const encodedQuery = encodeURIComponent(query);
-  const url = `https://news.google.com/rss/search?q=${encodedQuery}&hl=ko&gl=KR&ceid=KR:ko`;
+async function fetchRSS(query) {
+  const encoded = encodeURIComponent(query);
+  const url = `https://news.google.com/rss/search?q=${encoded}+when:3d&hl=ko&gl=KR&ceid=KR:ko`;
 
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Google News fetch failed: " + res.status);
-  const xml = await res.text();
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; LinkHub/1.0; +https://working-hub-olive.vercel.app)",
+      "Accept": "application/rss+xml, application/xml, text/xml",
+    },
+  });
 
-  // XML 파싱 (간단한 정규식 기반)
+  const text = await res.text();
+
+  // XML인지 확인
+  if (!text.includes("<item>")) {
+    return [];
+  }
+
   const items = [];
   const itemRegex = /<item>([\s\S]*?)<\/item>/g;
   let match;
-  while ((match = itemRegex.exec(xml)) !== null && items.length < 6) {
-    const itemXml = match[1];
-    const title = extractTag(itemXml, "title");
-    const link = extractTag(itemXml, "link");
-    const pubDate = extractTag(itemXml, "pubDate");
-    const source = extractTag(itemXml, "source");
+  while ((match = itemRegex.exec(text)) !== null && items.length < 8) {
+    const xml = match[1];
+    const title = extractTag(xml, "title");
+    const link = extractLink(xml);
+    const pubDate = extractTag(xml, "pubDate");
+    const source = extractTag(xml, "source");
 
     if (title && link) {
       items.push({
-        rank: items.length + 1,
-        title: decodeHtmlEntities(title),
-        summary: "",
-        source: source ? decodeHtmlEntities(source) : "",
+        title: decodeEntities(title),
+        source: source ? decodeEntities(source) : "",
         url: link,
-        date: pubDate ? formatDate(pubDate) : "",
+        date: pubDate ? fmtDate(pubDate) : "",
       });
     }
   }
-
   return items;
 }
 
 function extractTag(xml, tag) {
-  // CDATA 처리
-  const cdataRegex = new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>`);
-  const cdataMatch = xml.match(cdataRegex);
-  if (cdataMatch) return cdataMatch[1].trim();
-
-  const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`);
-  const m = xml.match(regex);
-  return m ? m[1].trim() : "";
+  const cdata = xml.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>`));
+  if (cdata) return cdata[1].trim();
+  const plain = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`));
+  return plain ? plain[1].trim() : "";
 }
 
-function decodeHtmlEntities(str) {
-  return str
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'");
+function extractLink(xml) {
+  // <link> 태그가 비어있고 URL이 텍스트 노드로 올 수 있음
+  const m = xml.match(/<link\s*\/?>([^<]+)/);
+  if (m) return m[1].trim();
+  const m2 = xml.match(/<link[^>]*href="([^"]+)"/);
+  return m2 ? m2[1] : "";
 }
 
-function formatDate(dateStr) {
+function decodeEntities(s) {
+  return s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'");
+}
+
+function fmtDate(s) {
   try {
-    const d = new Date(dateStr);
+    const d = new Date(s);
     return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
-  } catch {
-    return dateStr;
-  }
+  } catch { return s; }
 }
 
-// Supabase 캐시 읽기
-async function getCache(cacheId) {
-  try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/news_cache?id=eq.${cacheId}&select=*`,
-      { headers: SB_HEADERS }
-    );
-    const rows = await res.json();
-    if (rows.length > 0) {
-      const row = rows[0];
-      const age = Date.now() - new Date(row.updated_at).getTime();
-      if (age < CACHE_TTL_MS) {
-        return row.data;
+// 여러 쿼리로 검색 후 중복 제거, 합치기
+async function fetchGoogleNews(queries) {
+  const all = [];
+  const seen = new Set();
+
+  for (const q of queries) {
+    try {
+      const items = await fetchRSS(q);
+      for (const item of items) {
+        if (!seen.has(item.title)) {
+          seen.add(item.title);
+          all.push({ ...item, rank: all.length + 1 });
+        }
+        if (all.length >= 6) break;
       }
-    }
-  } catch (e) {
-    console.error("Cache read error:", e);
+    } catch {}
+    if (all.length >= 6) break;
   }
+
+  return all.slice(0, 6);
+}
+
+async function getCache(id) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/news_cache?id=eq.${id}&select=*`, { headers: SB_HEADERS });
+    const rows = await r.json();
+    if (rows.length > 0) {
+      const age = Date.now() - new Date(rows[0].updated_at).getTime();
+      if (age < CACHE_TTL_MS) return rows[0].data;
+    }
+  } catch {}
   return null;
 }
 
-// Supabase 캐시 쓰기 (upsert)
-async function setCache(cacheId, data) {
+async function setCache(id, data) {
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/news_cache`, {
       method: "POST",
       headers: { ...SB_HEADERS, Prefer: "resolution=merge-duplicates,return=representation" },
-      body: JSON.stringify({
-        id: cacheId,
-        data: data,
-        updated_at: new Date().toISOString(),
-      }),
+      body: JSON.stringify({ id, data, updated_at: new Date().toISOString() }),
     });
-  } catch (e) {
-    console.error("Cache write error:", e);
-  }
+  } catch {}
 }
 
 export default async function handler(req, res) {
@@ -127,25 +134,19 @@ export default async function handler(req, res) {
     const force = body.force || false;
     const cacheId = "news_" + tab.replace(/\s/g, "_");
 
-    // 1. 캐시 확인 (force가 아닌 경우)
     if (!force) {
       const cached = await getCache(cacheId);
-      if (cached) {
-        return res.status(200).json({ news: cached, cached: true });
-      }
+      if (cached) return res.status(200).json({ news: cached, cached: true });
     }
 
-    // 2. Google News RSS에서 가져오기
-    const query = CATEGORY_QUERIES[tab] || CATEGORY_QUERIES["AI 기술"];
-    const news = await fetchGoogleNews(query);
+    const queries = CATEGORY_QUERIES[tab] || CATEGORY_QUERIES["AI 기술"];
+    const news = await fetchGoogleNews(queries);
 
     if (news.length === 0) {
-      return res.status(500).json({ error: "뉴스를 찾을 수 없습니다" });
+      return res.status(500).json({ error: "뉴스를 찾을 수 없습니다. Google News 접근이 제한되었을 수 있습니다." });
     }
 
-    // 3. 캐시 저장
     await setCache(cacheId, news);
-
     return res.status(200).json({ news, cached: false });
   } catch (e) {
     return res.status(500).json({ error: e.message });
