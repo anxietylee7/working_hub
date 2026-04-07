@@ -33,6 +33,19 @@ const LINK_ICONS = [
   "🏠", "⭐", "🔔", "📋", "🗂️", "📎", "🧩", "⚙️", "🎬", "📸",
 ];
 
+const LABEL_COLORS = [
+  { id: "", name: "없음", bg: "transparent", text: "#9ca3af" },
+  { id: "blue", name: "파랑", bg: "#dbeafe", text: "#1e40af" },
+  { id: "green", name: "초록", bg: "#dcfce7", text: "#166534" },
+  { id: "purple", name: "보라", bg: "#ede9fe", text: "#5b21b6" },
+  { id: "orange", name: "주황", bg: "#ffedd5", text: "#9a3412" },
+  { id: "red", name: "빨강", bg: "#fee2e2", text: "#991b1b" },
+  { id: "pink", name: "핑크", bg: "#fce7f3", text: "#9d174d" },
+  { id: "yellow", name: "노랑", bg: "#fef9c3", text: "#854d0e" },
+  { id: "teal", name: "청록", bg: "#ccfbf1", text: "#115e59" },
+  { id: "gray", name: "회색", bg: "#f3f4f6", text: "#374151" },
+];
+
 // ─── Weather ───
 const WEATHER_ICONS = {
   "맑음": "☀️", "대체로 맑음": "🌤️", "구름조금": "⛅", "구름 조금": "⛅",
@@ -264,13 +277,16 @@ export default function TeamLinkHub() {
         const desc = f.querySelector('[name="desc"]').value.trim();
         const iconEl = f.querySelector('[name="icon"]:checked');
         const icon = iconEl ? iconEl.value : "";
+        const labelText = f.querySelector('[name="label_text"]').value.trim();
+        const labelColorEl = f.querySelector('[name="label_color"]:checked');
+        const labelColor = labelColorEl ? labelColorEl.value : "";
         if (!title || !url) { setSaving(false); return; }
         const fullUrl = url.startsWith("http") ? url : `https://${url}`;
         if (modal.item) {
-          await sbPatch("links", modal.item.id, { title, url: fullUrl, description: desc, icon });
+          await sbPatch("links", modal.item.id, { title, url: fullUrl, description: desc, icon, label_text: labelText, label_color: labelColor });
         } else {
           const cat = categories.find(c => c.id === modal.catId);
-          await sbPost("links", { id: `l-${uid()}`, category_id: modal.catId, title, url: fullUrl, description: desc, icon, sort_order: cat ? cat.links.length : 0 });
+          await sbPost("links", { id: `l-${uid()}`, category_id: modal.catId, title, url: fullUrl, description: desc, icon, label_text: labelText, label_color: labelColor, sort_order: cat ? cat.links.length : 0 });
         }
       } else {
         const name = f.querySelector('[name="catname"]').value.trim();
@@ -417,6 +433,21 @@ export default function TeamLinkHub() {
                   <label style={S.label}>제목 <input name="title" style={S.input} defaultValue={modal.item?.title || ""} placeholder="예: Jira Board" /></label>
                   <label style={S.label}>URL <input name="url" style={S.input} defaultValue={modal.item?.url || ""} placeholder="https://..." /></label>
                   <label style={S.label}>설명 (선택) <input name="desc" style={S.input} defaultValue={modal.item?.description || ""} placeholder="간단한 설명" /></label>
+                  <label style={S.label}>컬러 라벨 (선택)
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 4 }}>
+                      <input name="label_text" style={{ ...S.input, flex: 1, fontSize: 13 }} defaultValue={modal.item?.label_text || ""} placeholder="예: wiki, API, 공유문서" />
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                      {LABEL_COLORS.map(lc => (
+                        <label key={lc.id} style={{ cursor: "pointer" }}>
+                          <input type="radio" name="label_color" value={lc.id} defaultChecked={lc.id === (modal.item?.label_color || "")} style={{ display: "none" }} />
+                          <div className="label-color-dot" style={{ padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, background: lc.bg, color: lc.text, border: "2px solid transparent", transition: "border 0.15s" }}>
+                            {lc.name}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </label>
                 </>
               ) : (
                 <>
@@ -484,7 +515,16 @@ function LinkCard({ link, color, badge, isAdmin, onEdit, onDelete, onMoveUp, onM
           <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`} alt="" style={{ width: 22, height: 22, borderRadius: 4 }} onError={e => { e.target.style.display = "none"; e.target.parentElement.textContent = "🔗"; }} />
         )}
       </div>
-      <div style={S.linkInfo}><span style={S.linkTitle}>{link.title}</span><span style={S.linkDesc}>{link.description || domain}</span></div>
+      <div style={S.linkInfo}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {link.label_text && link.label_color && (() => {
+            const lc = LABEL_COLORS.find(c => c.id === link.label_color);
+            return lc ? <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: lc.bg, color: lc.text, flexShrink: 0 }}>{link.label_text}</span> : null;
+          })()}
+          <span style={S.linkTitle}>{link.title}</span>
+        </div>
+        <span style={S.linkDesc}>{link.description || domain}</span>
+      </div>
       {badge && <span style={{ ...S.linkBadge, background: `${color}12`, color }}>{badge}</span>}
       {isAdmin && <div style={S.linkActions} onClick={e => e.preventDefault()}>
         {onMoveUp && <button className="link-action" onClick={onMoveUp} title="위로">▲</button>}
@@ -516,6 +556,8 @@ const CSS = `
   }
   .icon-dot:hover { border-color: #6366f1; background: #f0f0ff; }
   input[type="radio"]:checked + .icon-dot { border-color: #6366f1; background: #eef2ff; box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
+  input[type="radio"]:checked + .label-color-dot { border-color: #1e1b4b !important; }
+  .label-color-dot:hover { opacity: 0.8; }
   .news-item { text-decoration: none; color: inherit; transition: background 0.15s; }
   .news-item:hover { background: #f8f9fb !important; }
   @keyframes spin { to { transform: rotate(360deg); } }
