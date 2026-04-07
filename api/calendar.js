@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  const ICS_URL = "https://outlook.office365.com/owa/calendar/9bb369c087514f938c3e6af3fac656a9@smilegate.com/a8c79feb4fe14c44a48f6a3e7a4b4f019172690863627632956/calendar.ics";
+  const ICS_URL = "https://outlook.office365.com/owa/calendar/9bb369c087514f938c3e6af3fac656a9@smilegate.com/d49b9a1bab324e7bbd6a761f6ce8f6628415992148646106780/calendar.ics";
 
   try {
     const r = await fetch(ICS_URL, {
@@ -92,22 +92,26 @@ export default async function handler(req, res) {
           const instanceDate = new Date(mondayKST);
           instanceDate.setDate(mondayKST.getDate() + ((targetDay === 0 ? 7 : targetDay) - 1));
 
+          const origDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+
           // 시작일 이전이면 스킵
-          if (instanceDate < new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())) continue;
+          if (instanceDate < origDate) continue;
 
           // UNTIL 이후면 스킵
           if (untilDate && instanceDate > untilDate) continue;
 
-          // COUNT 체크 (간단한 근사: 시작일로부터 주 수 계산)
-          if (count) {
-            const weeksDiff = Math.floor((instanceDate.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000 * interval));
-            if (weeksDiff >= count) continue;
+          // 시작일로부터 정확한 주 수 계산 (일 단위)
+          const daysDiff = Math.round((instanceDate.getTime() - origDate.getTime()) / (24 * 60 * 60 * 1000));
+          const weeksDiff = Math.round(daysDiff / 7);
+
+          // INTERVAL 체크 — 격주(2), 3주 등
+          if (interval > 1) {
+            if (weeksDiff % interval !== 0) continue;
           }
 
-          // INTERVAL 체크
-          if (interval > 1) {
-            const weeksDiff = Math.floor((instanceDate.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
-            if (weeksDiff % interval !== 0) continue;
+          // COUNT 체크
+          if (count) {
+            if (weeksDiff / interval >= count) continue;
           }
 
           const instDateStr = ds(instanceDate);
