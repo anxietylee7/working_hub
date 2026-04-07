@@ -454,9 +454,7 @@ function TodoBanner({ isAdmin }) {
             <span style={S.taskDivider}>|</span>
             {totalCount > 0 ? (
               <>
-                <span style={{ color: "#f59e0b" }}>미완료 {pendingCount}건</span>
-                <span style={S.taskDivider}>·</span>
-                <span style={{ color: "#10b981" }}>완료 {doneCount}건</span>
+                <span>{totalCount}건 등록</span>
                 <span style={S.taskDivider}>|</span>
                 <span style={{ opacity: 0.6 }}>{weekLabel}</span>
               </>
@@ -483,27 +481,18 @@ function TodoBanner({ isAdmin }) {
               <span style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>{weekLabel}</span>
               <button onClick={nextWeek} style={S.weekNavBtn}>▶</button>
               <button onClick={goThisWeek} style={S.weekTodayBtn}>이번 주</button>
+              <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: 4 }}>{totalCount}건</span>
             </div>
 
-            {/* Progress */}
-            <div style={{ padding: "12px 24px 8px", display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ flex: 1, height: 6, background: "#f0f1f5", borderRadius: 3, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: totalCount > 0 ? `${(doneCount / totalCount) * 100}%` : "0%", background: "linear-gradient(90deg, #10b981, #34d399)", borderRadius: 3, transition: "width 0.3s" }} />
-              </div>
-              <span style={{ fontSize: 12, color: "#9ca3af", flexShrink: 0 }}>{doneCount}/{totalCount} 완료</span>
-            </div>
-
-            {/* Todo list */}
+            {/* Memo list */}
             <div style={{ flex: 1, overflowY: "auto", padding: "0 24px" }}>
-              {todos.map(t => (
-                <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid #f5f5f5" }}>
-                  <button onClick={() => isAdmin ? toggleTodo(t.id, t.done) : null} style={{ width: 22, height: 22, borderRadius: 6, border: t.done ? "none" : "2px solid #d1d5db", background: t.done ? "#10b981" : "#fff", cursor: isAdmin ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 12, color: "#fff" }}>
-                    {t.done && "✓"}
-                  </button>
+              {todos.map((t, i) => (
+                <div key={t.id} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 0", borderBottom: "1px solid #f5f5f5" }}>
+                  <span style={{ fontSize: 13, color: "#9ca3af", fontWeight: 600, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
                   {editId === t.id ? (
                     <input value={editText} onChange={e => setEditText(e.target.value)} onKeyDown={e => e.key === "Enter" && saveEdit(t.id)} onBlur={() => saveEdit(t.id)} autoFocus style={{ flex: 1, padding: "6px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 14, fontFamily: "inherit" }} />
                   ) : (
-                    <span style={{ flex: 1, fontSize: 14, textDecoration: t.done ? "line-through" : "none", color: t.done ? "#9ca3af" : "#1a1a2e" }}>{t.text}</span>
+                    <span style={{ flex: 1, fontSize: 14, color: "#1a1a2e", lineHeight: 1.5 }}>{t.text}</span>
                   )}
                   {isAdmin && (
                     <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
