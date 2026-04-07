@@ -27,7 +27,6 @@ async function sbDelete(table, id) {
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const PALETTE = ["#6366f1", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
-
 const LINK_ICONS = [
   "", "🔗", "📄", "📊", "📁", "📝", "📌", "🎯", "🚀", "💡",
   "📧", "💬", "📅", "🎨", "🛠️", "📈", "🔒", "🌐", "📱", "💻",
@@ -83,6 +82,101 @@ function WeatherWidget() {
   );
 }
 
+// ─── AI News Feed ───
+const NEWS_TABS = [
+  { id: "ai", label: "AI 기술" },
+  { id: "llm", label: "LLM" },
+  { id: "industry", label: "산업 동향" },
+];
+
+function AINewsFeed() {
+  const [tab, setTab] = useState("ai");
+  const [news, setNews] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchNews = useCallback(async (tabId, force = false) => {
+    if (!force && news[tabId]?.length) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const category = NEWS_TABS.find(t => t.id === tabId)?.label || "AI 기술";
+      const r = await fetch("/api/news", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category }),
+      });
+      if (!r.ok) {
+        const err = await r.json();
+        throw new Error(err.detail || err.error || "API 오류");
+      }
+      const data = await r.json();
+      setNews(prev => ({ ...prev, [tabId]: data.news || [] }));
+    } catch (e) {
+      console.error("News fetch error:", e);
+      setError("뉴스를 불러올 수 없습니다");
+    }
+    setLoading(false);
+  }, [news]);
+
+  useEffect(() => { fetchNews(tab); }, [tab]);
+
+  const refreshTab = () => fetchNews(tab, true);
+  const currentNews = news[tab] || [];
+
+  return (
+    <div style={S.newsPanel}>
+      <div style={S.newsPanelHeader}>
+        <h3 style={S.newsPanelTitle}>🤖 AI 뉴스</h3>
+        <button onClick={refreshTab} style={S.newsRefresh} title="새로고침">🔄</button>
+      </div>
+      <div style={S.newsTabs}>
+        {NEWS_TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            style={{ ...S.newsTab, ...(tab === t.id ? S.newsTabActive : {}) }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <div style={S.newsContent}>
+        {loading ? (
+          <div style={S.newsLoading}>
+            <div style={S.spinner} />
+            <span style={{ fontSize: 13, color: "#6b7280", marginTop: 8 }}>AI가 최신 뉴스를 찾고 있어요...</span>
+          </div>
+        ) : error ? (
+          <div style={S.newsError}>
+            <span>{error}</span>
+            <button onClick={refreshTab} style={{ ...S.newsTab, ...S.newsTabActive, marginTop: 8 }}>다시 시도</button>
+          </div>
+        ) : (
+          <div style={S.newsList}>
+            {currentNews.map((item, i) => (
+              <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" className="news-item" style={S.newsItem}>
+                <div style={S.newsRank}>{item.rank || i + 1}</div>
+                <div style={S.newsItemContent}>
+                  <span style={S.newsItemTitle}>{item.title}</span>
+                  <span style={S.newsItemSummary}>{item.summary}</span>
+                  <span style={S.newsItemMeta}>
+                    {item.source && <span>{item.source}</span>}
+                    {item.date && <span style={{ opacity: 0.6 }}> · {item.date}</span>}
+                  </span>
+                </div>
+              </a>
+            ))}
+            {currentNews.length === 0 && !loading && (
+              <div style={S.newsError}>
+                <span>뉴스가 없습니다</span>
+                <button onClick={refreshTab} style={{ ...S.newsTab, ...S.newsTabActive, marginTop: 8 }}>불러오기</button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ───
 export default function TeamLinkHub() {
   const [categories, setCategories] = useState([]);
@@ -110,28 +204,20 @@ export default function TeamLinkHub() {
   const allLinks = categories.flatMap(c => c.links.map(l => ({ ...l, catName: c.name, catEmoji: c.emoji, catColor: c.color, catId: c.id })));
   const filtered = search.trim() ? allLinks.filter(l => l.title.toLowerCase().includes(search.toLowerCase()) || l.description?.toLowerCase().includes(search.toLowerCase()) || l.catName?.toLowerCase().includes(search.toLowerCase())) : null;
 
-  // ─── Reorder ───
   const moveLink = async (catId, linkId, dir) => {
     const cat = categories.find(c => c.id === catId);
     if (!cat) return;
     const idx = cat.links.findIndex(l => l.id === linkId);
     const newIdx = idx + dir;
     if (newIdx < 0 || newIdx >= cat.links.length) return;
-
     const reordered = [...cat.links];
     [reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]];
-
     setCategories(prev => prev.map(c => c.id === catId ? { ...c, links: reordered } : c));
-
     try {
       await Promise.all(reordered.map((l, i) => sbPatch("links", l.id, { sort_order: i })));
-    } catch (e) {
-      console.error("Reorder error:", e);
-      await fetchAll();
-    }
+    } catch (e) { console.error("Reorder error:", e); await fetchAll(); }
   };
 
-  // ─── CRUD ───
   const handleSubmit = async () => {
     const f = formRef.current; if (!f) return;
     setSaving(true);
@@ -148,8 +234,7 @@ export default function TeamLinkHub() {
           await sbPatch("links", modal.item.id, { title, url: fullUrl, description: desc, icon });
         } else {
           const cat = categories.find(c => c.id === modal.catId);
-          const sortOrder = cat ? cat.links.length : 0;
-          await sbPost("links", { id: `l-${uid()}`, category_id: modal.catId, title, url: fullUrl, description: desc, icon, sort_order: sortOrder });
+          await sbPost("links", { id: `l-${uid()}`, category_id: modal.catId, title, url: fullUrl, description: desc, icon, sort_order: cat ? cat.links.length : 0 });
         }
       } else {
         const name = f.querySelector('[name="catname"]').value.trim();
@@ -165,10 +250,7 @@ export default function TeamLinkHub() {
       }
       await fetchAll();
       setModal(null);
-    } catch (e) {
-      console.error("Save error:", e);
-      alert("저장 실패: " + e.message);
-    }
+    } catch (e) { console.error("Save error:", e); alert("저장 실패: " + e.message); }
     setSaving(false);
   };
 
@@ -177,12 +259,8 @@ export default function TeamLinkHub() {
     try {
       if (deleteConfirm.type === "link") await sbDelete("links", deleteConfirm.id);
       else await sbDelete("categories", deleteConfirm.id);
-      await fetchAll();
-      setDeleteConfirm(null);
-    } catch (e) {
-      console.error("Delete error:", e);
-      alert("삭제 실패: " + e.message);
-    }
+      await fetchAll(); setDeleteConfirm(null);
+    } catch (e) { console.error("Delete error:", e); alert("삭제 실패: " + e.message); }
     setSaving(false);
   };
 
@@ -201,7 +279,7 @@ export default function TeamLinkHub() {
       <style>{CSS}</style>
 
       <header style={S.hero}>
-        <div style={S.heroGrid}>
+        <div style={S.heroInner}>
           <div style={S.heroLeft}>
             <p style={S.heroDate}>{now.getFullYear()}년 {now.getMonth()+1}월 {now.getDate()}일 ({weekday})</p>
             <h1 style={S.heroTitle}>{greeting} 👋</h1>
@@ -216,58 +294,64 @@ export default function TeamLinkHub() {
         </div>
       </header>
 
-      <main style={S.main}>
-        <div style={S.statsStrip}>
-          <div style={S.statItem}><span style={S.statNum}>{categories.length}</span><span style={S.statLabel}>카테고리</span></div>
-          <div style={S.statDivider} />
-          <div style={S.statItem}><span style={S.statNum}>{allLinks.length}</span><span style={S.statLabel}>전체 링크</span></div>
-          <div style={{ flex: 1 }} />
-          <button style={S.refreshBtn} onClick={fetchAll} title="새로고침">🔄</button>
-          <button style={S.addCatBtn} onClick={() => setModal({ type: "category" })}>
-            <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> 카테고리 추가
-          </button>
-        </div>
+      <div style={S.twoCol}>
+        <main style={S.mainCol}>
+          <div style={S.statsStrip}>
+            <div style={S.statItem}><span style={S.statNum}>{categories.length}</span><span style={S.statLabel}>카테고리</span></div>
+            <div style={S.statDivider} />
+            <div style={S.statItem}><span style={S.statNum}>{allLinks.length}</span><span style={S.statLabel}>전체 링크</span></div>
+            <div style={{ flex: 1 }} />
+            <button style={S.refreshBtn} onClick={fetchAll} title="새로고침">🔄</button>
+            <button style={S.addCatBtn} onClick={() => setModal({ type: "category" })}>
+              <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> 카테고리 추가
+            </button>
+          </div>
 
-        {filtered !== null ? (
-          <div>
-            <p style={S.searchLabel}>"{search}" 검색 결과 <strong>{filtered.length}</strong>건</p>
-            {filtered.length === 0 ? <div style={S.emptyState}>검색 결과가 없습니다</div> : (
-              <div style={S.listWrap}>{filtered.map(l => <LinkCard key={l.id} link={l} color={l.catColor} badge={`${l.catEmoji} ${l.catName}`} onEdit={() => { setSearch(""); setModal({ type: "link", catId: l.catId, item: l }); }} onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })} />)}</div>
-            )}
-          </div>
-        ) : (
-          <div style={S.catGrid}>
-            {categories.map(cat => (
-              <div key={cat.id} className="cat-card" style={S.catCard}>
-                <div style={{ ...S.catHeader, background: `linear-gradient(135deg, ${cat.color}, ${cat.color}cc)` }}>
-                  <div style={S.catHeaderLeft}>
-                    <span style={S.catEmoji}>{cat.emoji}</span>
-                    <div><h2 style={S.catName}>{cat.name}</h2><span style={S.catCount}>{cat.links.length}개 링크</span></div>
+          {filtered !== null ? (
+            <div>
+              <p style={S.searchLabel}>"{search}" 검색 결과 <strong>{filtered.length}</strong>건</p>
+              {filtered.length === 0 ? <div style={S.emptyState}>검색 결과가 없습니다</div> : (
+                <div style={S.listWrap}>{filtered.map(l => <LinkCard key={l.id} link={l} color={l.catColor} badge={`${l.catEmoji} ${l.catName}`} onEdit={() => { setSearch(""); setModal({ type: "link", catId: l.catId, item: l }); }} onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })} />)}</div>
+              )}
+            </div>
+          ) : (
+            <div style={S.catGrid}>
+              {categories.map(cat => (
+                <div key={cat.id} className="cat-card" style={S.catCard}>
+                  <div style={{ ...S.catHeader, background: `linear-gradient(135deg, ${cat.color}, ${cat.color}cc)` }}>
+                    <div style={S.catHeaderLeft}>
+                      <span style={S.catEmoji}>{cat.emoji}</span>
+                      <div><h2 style={S.catName}>{cat.name}</h2><span style={S.catCount}>{cat.links.length}개 링크</span></div>
+                    </div>
+                    <div style={S.catActions}>
+                      <button className="cat-action" onClick={() => setModal({ type: "category", item: cat })}>✏️</button>
+                      <button className="cat-action" onClick={() => setDeleteConfirm({ type: "category", id: cat.id, title: cat.name })}>🗑️</button>
+                    </div>
                   </div>
-                  <div style={S.catActions}>
-                    <button className="cat-action" onClick={() => setModal({ type: "category", item: cat })}>✏️</button>
-                    <button className="cat-action" onClick={() => setDeleteConfirm({ type: "category", id: cat.id, title: cat.name })}>🗑️</button>
+                  <div style={S.catBody}>
+                    {cat.links.map((l, idx) => (
+                      <LinkCard key={l.id} link={l} color={cat.color}
+                        onEdit={() => setModal({ type: "link", catId: cat.id, item: l })}
+                        onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })}
+                        onMoveUp={idx > 0 ? () => moveLink(cat.id, l.id, -1) : null}
+                        onMoveDown={idx < cat.links.length - 1 ? () => moveLink(cat.id, l.id, 1) : null}
+                      />
+                    ))}
+                    <button style={{ ...S.addLinkRow, borderColor: `${cat.color}33`, color: cat.color }} onClick={() => setModal({ type: "link", catId: cat.id })}>
+                      <span style={{ fontSize: 20, lineHeight: 1 }}>+</span> 링크 추가
+                    </button>
                   </div>
                 </div>
-                <div style={S.catBody}>
-                  {cat.links.map((l, idx) => (
-                    <LinkCard key={l.id} link={l} color={cat.color}
-                      onEdit={() => setModal({ type: "link", catId: cat.id, item: l })}
-                      onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })}
-                      onMoveUp={idx > 0 ? () => moveLink(cat.id, l.id, -1) : null}
-                      onMoveDown={idx < cat.links.length - 1 ? () => moveLink(cat.id, l.id, 1) : null}
-                    />
-                  ))}
-                  <button style={{ ...S.addLinkRow, borderColor: `${cat.color}33`, color: cat.color }} onClick={() => setModal({ type: "link", catId: cat.id })}>
-                    <span style={{ fontSize: 20, lineHeight: 1 }}>+</span> 링크 추가
-                  </button>
-                </div>
-              </div>
-            ))}
-            {categories.length === 0 && <div style={S.emptyState}><div style={{ fontSize: 48, marginBottom: 12 }}>🔗</div><p style={{ fontWeight: 600 }}>카테고리를 추가해서 시작하세요</p></div>}
-          </div>
-        )}
-      </main>
+              ))}
+              {categories.length === 0 && <div style={S.emptyState}><div style={{ fontSize: 48, marginBottom: 12 }}>🔗</div><p style={{ fontWeight: 600 }}>카테고리를 추가해서 시작하세요</p></div>}
+            </div>
+          )}
+        </main>
+
+        <aside style={S.sideCol}>
+          <AINewsFeed />
+        </aside>
+      </div>
 
       {modal && (
         <div style={S.overlay} onClick={() => setModal(null)}>
@@ -369,17 +453,19 @@ const CSS = `
   input[type="radio"]:checked + .color-dot { border-color: #1a1a2e !important; }
   .icon-dot {
     width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-    font-size: 18px; cursor: pointer; border: 2px solid #e5e7eb; transition: border-color 0.15s, background 0.15s;
-    background: #fff;
+    font-size: 18px; cursor: pointer; border: 2px solid #e5e7eb; transition: border-color 0.15s, background 0.15s; background: #fff;
   }
   .icon-dot:hover { border-color: #6366f1; background: #f0f0ff; }
   input[type="radio"]:checked + .icon-dot { border-color: #6366f1; background: #eef2ff; box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
+  .news-item { text-decoration: none; color: inherit; transition: background 0.15s; }
+  .news-item:hover { background: #f8f9fb !important; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 `;
 
 const S = {
   root: { fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif", background: "#f0f1f5", minHeight: "100vh", color: "#1a1a2e" },
   hero: { background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)", padding: "36px 32px 40px", color: "#fff" },
-  heroGrid: { maxWidth: 880, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "start" },
+  heroInner: { maxWidth: 1160, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "start" },
   heroLeft: {}, heroRight: { minWidth: 260 },
   heroDate: { fontSize: 13, opacity: 0.6, marginBottom: 6, fontWeight: 500 },
   heroTitle: { fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 4 },
@@ -397,7 +483,9 @@ const S = {
   weatherForecast: { display: "flex", justifyContent: "space-between", marginTop: 16, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" },
   forecastDay: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 },
   weatherFooter: { display: "flex", justifyContent: "space-between", marginTop: 12, fontSize: 11, opacity: 0.5, fontWeight: 500 },
-  main: { maxWidth: 880, margin: "0 auto", padding: "0 32px 64px" },
+  twoCol: { maxWidth: 1160, margin: "0 auto", padding: "0 32px 64px", display: "grid", gridTemplateColumns: "1fr 320px", gap: 24, alignItems: "start" },
+  mainCol: { minWidth: 0 },
+  sideCol: { position: "sticky", top: 24 },
   statsStrip: { display: "flex", alignItems: "center", gap: 20, padding: "18px 24px", margin: "-20px 0 24px", background: "#fff", borderRadius: 14, boxShadow: "0 4px 20px rgba(0,0,0,0.06)", position: "relative", zIndex: 2 },
   statItem: { display: "flex", alignItems: "baseline", gap: 6 },
   statNum: { fontSize: 22, fontWeight: 800, color: "#1e1b4b" },
@@ -425,6 +513,24 @@ const S = {
   linkBadge: { fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 10px", flexShrink: 0 },
   linkActions: { display: "flex", gap: 2, flexShrink: 0 },
   addLinkRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", margin: "4px 8px 8px", borderRadius: 12, border: "2px dashed", background: "transparent", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: 0.6, transition: "opacity 0.15s" },
+  newsPanel: { background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)", marginTop: -20 },
+  newsPanelHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px 12px" },
+  newsPanelTitle: { fontSize: 16, fontWeight: 700 },
+  newsRefresh: { background: "none", border: "1px solid #e5e7eb", borderRadius: 8, padding: "4px 8px", cursor: "pointer", fontSize: 14 },
+  newsTabs: { display: "flex", gap: 6, padding: "0 20px 12px" },
+  newsTab: { background: "#f3f4f6", border: "none", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#6b7280", transition: "all 0.15s" },
+  newsTabActive: { background: "#1e1b4b", color: "#fff" },
+  newsContent: { borderTop: "1px solid #f0f1f5" },
+  newsLoading: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px" },
+  spinner: { width: 28, height: 28, border: "3px solid #e5e7eb", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
+  newsError: { display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#6b7280" },
+  newsList: { display: "flex", flexDirection: "column" },
+  newsItem: { display: "flex", gap: 12, padding: "14px 20px", borderBottom: "1px solid #f5f5f5", cursor: "pointer" },
+  newsRank: { width: 24, height: 24, borderRadius: 6, background: "linear-gradient(135deg, #6366f1, #818cf8)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0, marginTop: 2 },
+  newsItemContent: { flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 },
+  newsItemTitle: { fontSize: 13, fontWeight: 600, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" },
+  newsItemSummary: { fontSize: 12, color: "#6b7280", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" },
+  newsItemMeta: { fontSize: 11, color: "#9ca3af" },
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" },
   modal: { background: "#fff", borderRadius: 20, padding: "28px 32px", width: "90%", maxWidth: 440, boxShadow: "0 24px 80px rgba(0,0,0,0.18)", maxHeight: "85vh", overflowY: "auto" },
   modalTitle: { fontSize: 18, fontWeight: 700, marginBottom: 20 },
