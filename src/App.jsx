@@ -207,14 +207,15 @@ export default function TeamLinkHub() {
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [activeTab, setActiveTab] = useState(null);
+  const [quicklinks, setQuicklinks] = useState([]);
+  const [qlModal, setQlModal] = useState(null);
+  const [movedLinkId, setMovedLinkId] = useState(null);
   const formRef = useRef(null);
+  const qlFormRef = useRef(null);
   const pwRef = useRef(null);
 
-  const QUICK_LINKS = [
-    { title: "선행AI팀 회의록", emoji: "📝", color: "#6366f1", url: "https://wiki.sgr.com/pages/viewpage.action?pageId=657235319" },
-    { title: "AI PoC 위키 페이지", emoji: "🧪", color: "#0ea5e9", url: "https://wiki.sgr.com/pages/viewpage.action?pageId=821693544&src=contextnavpagetreemode" },
-    { title: "AI QA/QC 위키 페이지", emoji: "✅", color: "#10b981", url: "https://wiki.sgr.com/pages/viewpage.action?pageId=782666936" },
-  ];
+  const QL_COLORS = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
+  const QL_EMOJIS = ["📝", "🧪", "✅", "📋", "🔗", "💡", "🚀", "📊", "🎯", "⚙️", "📁", "🌐"];
 
   const handleLogin = async () => {
     const pw = pwRef.current?.value;
@@ -246,12 +247,18 @@ export default function TeamLinkHub() {
 
   const fetchAll = useCallback(async () => {
     try {
-      const [cats, links] = await Promise.all([
+      const [cats, links, qls] = await Promise.all([
         sbGet("categories", "order=sort_order.asc,created_at.asc"),
         sbGet("links", "order=sort_order.asc,created_at.asc"),
+        sbGet("quicklinks", "order=sort_order.asc,created_at.asc"),
       ]);
-      setCategories(cats.map(c => ({ ...c, links: links.filter(l => l.category_id === c.id) })));
-      if (!activeTab && cats.length > 0) setActiveTab(cats[0].id);
+      const newCats = cats.map(c => ({ ...c, links: links.filter(l => l.category_id === c.id) }));
+      setCategories(newCats);
+      setQuicklinks(qls);
+      setActiveTab(prev => {
+        if (prev && newCats.find(c => c.id === prev)) return prev;
+        return newCats.length > 0 ? newCats[0].id : null;
+      });
     } catch (e) { console.error("Fetch error:", e); }
     setLoaded(true);
   }, []);
@@ -270,6 +277,8 @@ export default function TeamLinkHub() {
     const reordered = [...cat.links];
     [reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]];
     setCategories(prev => prev.map(c => c.id === catId ? { ...c, links: reordered } : c));
+    setMovedLinkId(linkId);
+    setTimeout(() => setMovedLinkId(null), 600);
     try {
       await Promise.all(reordered.map((l, i) => sbPatch("links", l.id, { sort_order: i })));
     } catch (e) { console.error("Reorder error:", e); await fetchAll(); }
@@ -336,6 +345,31 @@ export default function TeamLinkHub() {
     setSaving(false);
   };
 
+  const handleQlSave = async () => {
+    const f = qlFormRef.current; if (!f) return;
+    setSaving(true);
+    try {
+      const title = f.querySelector('[name="ql_title"]').value.trim();
+      const url = f.querySelector('[name="ql_url"]').value.trim();
+      const emoji = f.querySelector('[name="ql_emoji"]:checked')?.value || "🔗";
+      const color = f.querySelector('[name="ql_color"]:checked')?.value || "#6366f1";
+      const fullUrl = url && !url.startsWith("http") ? `https://${url}` : url;
+      await sbPatch("quicklinks", qlModal.id, { title, url: fullUrl, emoji, color });
+      await fetchAll();
+      setQlModal(null);
+    } catch (e) { console.error("QL save error:", e); alert("저장 실패: " + e.message); }
+    setSaving(false);
+  };
+
+  const handleQlClear = async (id) => {
+    setSaving(true);
+    try {
+      await sbPatch("quicklinks", id, { title: "", url: "", emoji: "🔗", color: "#6366f1" });
+      await fetchAll();
+    } catch (e) { console.error("QL clear error:", e); }
+    setSaving(false);
+  };
+
   const weekday = ["일","월","화","수","목","금","토"][now.getDay()];
   const greeting = now.getHours() < 12 ? "좋은 아침이에요" : now.getHours() < 18 ? "좋은 오후에요" : "좋은 저녁이에요";
 
@@ -395,14 +429,25 @@ export default function TeamLinkHub() {
             </div>
           ) : (
             <>
-              {/* Quick Links */}
+              {/* Quick Links — editable */}
               <div style={S.quickLinks}>
-                {QUICK_LINKS.map((ql, i) => (
-                  <a key={i} href={ql.url} target="_blank" rel="noopener noreferrer" className="quick-link" style={{ ...S.quickLink, borderLeft: `4px solid ${ql.color}` }}>
-                    <span style={{ fontSize: 20 }}>{ql.emoji}</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: "#1a1a2e" }}>{ql.title}</span>
-                    <svg style={{ marginLeft: "auto", opacity: 0.3 }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={ql.color} strokeWidth="2.5" strokeLinecap="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
-                  </a>
+                {quicklinks.map(ql => ql.title ? (
+                  <div key={ql.id} style={{ position: "relative" }}>
+                    <a href={ql.url} target="_blank" rel="noopener noreferrer" className="quick-link" style={{ ...S.quickLink, borderLeft: `4px solid ${ql.color}` }}>
+                      <span style={{ fontSize: 20 }}>{ql.emoji}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#1a1a2e", flex: 1 }}>{ql.title}</span>
+                      <svg style={{ flexShrink: 0, opacity: 0.3 }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={ql.color} strokeWidth="2.5" strokeLinecap="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                    </a>
+                    {isAdmin && <div className="ql-actions" style={S.qlActions}>
+                      <button className="ql-btn" onClick={() => setQlModal(ql)}>✏️</button>
+                      <button className="ql-btn" onClick={() => handleQlClear(ql.id)}>✕</button>
+                    </div>}
+                  </div>
+                ) : (
+                  <button key={ql.id} onClick={() => isAdmin ? setQlModal(ql) : null} style={S.quickLinkEmpty}>
+                    <span style={{ fontSize: 18, opacity: 0.4 }}>+</span>
+                    <span style={{ fontSize: 12, color: "#9ca3af" }}>{isAdmin ? "바로가기 추가" : "빈 슬롯"}</span>
+                  </button>
                 ))}
               </div>
 
@@ -447,6 +492,7 @@ export default function TeamLinkHub() {
                         {cat.links.map((l, idx) => (
                           <LinkCard key={l.id} link={l} color={cat.color}
                             isAdmin={isAdmin}
+                            isMoved={movedLinkId === l.id}
                             onEdit={() => setModal({ type: "link", catId: cat.id, item: l })}
                             onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })}
                             onMoveUp={idx > 0 ? () => moveLink(cat.id, l.id, -1) : null}
@@ -543,6 +589,42 @@ export default function TeamLinkHub() {
         </div>
       )}
 
+      {qlModal && (
+        <div style={S.overlay} onClick={() => setQlModal(null)}>
+          <div style={S.modal} onClick={e => e.stopPropagation()}>
+            <h3 style={S.modalTitle}>⚡ 바로가기 {qlModal.title ? "수정" : "추가"}</h3>
+            <div ref={qlFormRef} style={S.form}>
+              <label style={S.label}>이모지
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                  {QL_EMOJIS.map(em => (
+                    <label key={em} style={{ cursor: "pointer" }}>
+                      <input type="radio" name="ql_emoji" value={em} defaultChecked={em === (qlModal.emoji || "🔗")} style={{ display: "none" }} />
+                      <div className="icon-dot" style={{ width: 32, height: 32, fontSize: 16 }}>{em}</div>
+                    </label>
+                  ))}
+                </div>
+              </label>
+              <label style={S.label}>컬러
+                <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                  {QL_COLORS.map(c => (
+                    <label key={c} style={{ cursor: "pointer" }}>
+                      <input type="radio" name="ql_color" value={c} defaultChecked={c === (qlModal.color || "#6366f1")} style={{ display: "none" }} />
+                      <div className="color-dot" style={{ width: 28, height: 28, borderRadius: "50%", background: c, border: "3px solid transparent", transition: "border 0.15s" }} />
+                    </label>
+                  ))}
+                </div>
+              </label>
+              <label style={S.label}>제목 <input name="ql_title" style={S.input} defaultValue={qlModal.title || ""} placeholder="예: 선행AI팀 회의록" /></label>
+              <label style={S.label}>URL <input name="ql_url" style={S.input} defaultValue={qlModal.url || ""} placeholder="https://..." /></label>
+            </div>
+            <div style={S.modalActions}>
+              <button style={S.cancelBtn} onClick={() => setQlModal(null)}>취소</button>
+              <button style={{ ...S.saveBtn, opacity: saving ? 0.6 : 1 }} onClick={handleQlSave} disabled={saving}>{saving ? "저장 중..." : "저장"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showLogin && (
         <div style={S.overlay} onClick={() => setShowLogin(false)}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
@@ -561,11 +643,11 @@ export default function TeamLinkHub() {
   );
 }
 
-function LinkCard({ link, color, badge, isAdmin, onEdit, onDelete, onMoveUp, onMoveDown }) {
+function LinkCard({ link, color, badge, isAdmin, isMoved, onEdit, onDelete, onMoveUp, onMoveDown }) {
   const domain = (() => { try { return new URL(link.url).hostname.replace("www.", ""); } catch { return ""; } })();
   const hasIcon = link.icon && link.icon.trim();
   return (
-    <a href={link.url} target="_blank" rel="noopener noreferrer" className="link-row" style={S.linkRow}>
+    <a href={link.url} target="_blank" rel="noopener noreferrer" className={`link-row ${isMoved ? "link-moved" : ""}`} style={S.linkRow}>
       <div style={{ ...S.linkIcon, background: `${color}12`, color }}>
         {hasIcon ? (
           <span style={{ fontSize: 22, lineHeight: 1 }}>{link.icon}</span>
@@ -626,6 +708,11 @@ const CSS = `
   .news-item { text-decoration: none; color: inherit; transition: background 0.15s; }
   .news-item:hover { background: #f8f9fb !important; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes linkFlash { 0% { background: #eef2ff; } 100% { background: transparent; } }
+  .link-moved { animation: linkFlash 0.6s ease-out; }
+  .ql-actions { position: absolute; top: 4px; right: 4px; display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
+  .ql-actions .ql-btn { background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 11px; padding: 2px 5px; }
+  div:hover > .ql-actions { opacity: 1; }
 `;
 
 const S = {
@@ -666,6 +753,8 @@ const S = {
   // Quick links
   quickLinks: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 16 },
   quickLink: { display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "#fff", borderRadius: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", cursor: "pointer" },
+  quickLinkEmpty: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px 16px", background: "#fff", borderRadius: 12, border: "2px dashed #e5e7eb", cursor: "pointer", fontFamily: "inherit", width: "100%", transition: "border-color 0.15s" },
+  qlActions: { position: "absolute", top: 4, right: 4, display: "flex", gap: 2 },
 
   // Category tabs — pill buttons
   catTabBar: { marginBottom: 0, overflowX: "auto" },
