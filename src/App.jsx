@@ -3,30 +3,36 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // ─── Supabase config ───
 const SUPABASE_URL = "https://pyfzeyxcwzecjzeuhehn.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5ZnpleXhjd3plY2p6ZXVoZWhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1MDcwMzUsImV4cCI6MjA5MTA4MzAzNX0.4nwLGVT7fufgQjr8CIhtOk6PreRyxz8BNJY8Kn2v_cU";
-const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" };
+const hdrs = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" };
 
 async function sbGet(table, query = "") {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, { headers });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, { headers: hdrs });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
 }
 async function sbPost(table, body) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, { method: "POST", headers: { ...headers, Prefer: "return=representation" }, body: JSON.stringify(body) });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, { method: "POST", headers: hdrs, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
 }
 async function sbPatch(table, id, body) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, { method: "PATCH", headers: { ...headers, Prefer: "return=representation" }, body: JSON.stringify(body) });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, { method: "PATCH", headers: hdrs, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
 }
 async function sbDelete(table, id) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, { method: "DELETE", headers });
-  if (!res.ok) throw new Error(await res.text());
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, { method: "DELETE", headers: hdrs });
+  if (!r.ok) throw new Error(await r.text());
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const PALETTE = ["#6366f1", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
+
+const LINK_ICONS = [
+  "", "🔗", "📄", "📊", "📁", "📝", "📌", "🎯", "🚀", "💡",
+  "📧", "💬", "📅", "🎨", "🛠️", "📈", "🔒", "🌐", "📱", "💻",
+  "🏠", "⭐", "🔔", "📋", "🗂️", "📎", "🧩", "⚙️", "🎬", "📸",
+];
 
 // ─── Weather ───
 const WMO = {
@@ -88,7 +94,6 @@ export default function TeamLinkHub() {
   const [saving, setSaving] = useState(false);
   const formRef = useRef(null);
 
-  // Fetch all data
   const fetchAll = useCallback(async () => {
     try {
       const [cats, links] = await Promise.all([
@@ -105,7 +110,28 @@ export default function TeamLinkHub() {
   const allLinks = categories.flatMap(c => c.links.map(l => ({ ...l, catName: c.name, catEmoji: c.emoji, catColor: c.color, catId: c.id })));
   const filtered = search.trim() ? allLinks.filter(l => l.title.toLowerCase().includes(search.toLowerCase()) || l.description?.toLowerCase().includes(search.toLowerCase()) || l.catName?.toLowerCase().includes(search.toLowerCase())) : null;
 
-  // CRUD
+  // ─── Reorder ───
+  const moveLink = async (catId, linkId, dir) => {
+    const cat = categories.find(c => c.id === catId);
+    if (!cat) return;
+    const idx = cat.links.findIndex(l => l.id === linkId);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= cat.links.length) return;
+
+    const reordered = [...cat.links];
+    [reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]];
+
+    setCategories(prev => prev.map(c => c.id === catId ? { ...c, links: reordered } : c));
+
+    try {
+      await Promise.all(reordered.map((l, i) => sbPatch("links", l.id, { sort_order: i })));
+    } catch (e) {
+      console.error("Reorder error:", e);
+      await fetchAll();
+    }
+  };
+
+  // ─── CRUD ───
   const handleSubmit = async () => {
     const f = formRef.current; if (!f) return;
     setSaving(true);
@@ -114,12 +140,16 @@ export default function TeamLinkHub() {
         const title = f.querySelector('[name="title"]').value.trim();
         const url = f.querySelector('[name="url"]').value.trim();
         const desc = f.querySelector('[name="desc"]').value.trim();
+        const iconEl = f.querySelector('[name="icon"]:checked');
+        const icon = iconEl ? iconEl.value : "";
         if (!title || !url) { setSaving(false); return; }
         const fullUrl = url.startsWith("http") ? url : `https://${url}`;
         if (modal.item) {
-          await sbPatch("links", modal.item.id, { title, url: fullUrl, description: desc });
+          await sbPatch("links", modal.item.id, { title, url: fullUrl, description: desc, icon });
         } else {
-          await sbPost("links", { id: `l-${uid()}`, category_id: modal.catId, title, url: fullUrl, description: desc });
+          const cat = categories.find(c => c.id === modal.catId);
+          const sortOrder = cat ? cat.links.length : 0;
+          await sbPost("links", { id: `l-${uid()}`, category_id: modal.catId, title, url: fullUrl, description: desc, icon, sort_order: sortOrder });
         }
       } else {
         const name = f.querySelector('[name="catname"]').value.trim();
@@ -220,7 +250,14 @@ export default function TeamLinkHub() {
                   </div>
                 </div>
                 <div style={S.catBody}>
-                  {cat.links.map(l => <LinkCard key={l.id} link={l} color={cat.color} onEdit={() => setModal({ type: "link", catId: cat.id, item: l })} onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })} />)}
+                  {cat.links.map((l, idx) => (
+                    <LinkCard key={l.id} link={l} color={cat.color}
+                      onEdit={() => setModal({ type: "link", catId: cat.id, item: l })}
+                      onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })}
+                      onMoveUp={idx > 0 ? () => moveLink(cat.id, l.id, -1) : null}
+                      onMoveDown={idx < cat.links.length - 1 ? () => moveLink(cat.id, l.id, 1) : null}
+                    />
+                  ))}
                   <button style={{ ...S.addLinkRow, borderColor: `${cat.color}33`, color: cat.color }} onClick={() => setModal({ type: "link", catId: cat.id })}>
                     <span style={{ fontSize: 20, lineHeight: 1 }}>+</span> 링크 추가
                   </button>
@@ -232,7 +269,6 @@ export default function TeamLinkHub() {
         )}
       </main>
 
-      {/* Modal */}
       {modal && (
         <div style={S.overlay} onClick={() => setModal(null)}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
@@ -240,6 +276,16 @@ export default function TeamLinkHub() {
             <div ref={formRef} style={S.form}>
               {modal.type === "link" ? (
                 <>
+                  <label style={S.label}>아이콘
+                    <div style={S.iconGrid}>
+                      {LINK_ICONS.map((ic, i) => (
+                        <label key={i} style={S.iconLabel}>
+                          <input type="radio" name="icon" value={ic} defaultChecked={ic === (modal.item?.icon || "")} style={{ display: "none" }} />
+                          <div className="icon-dot">{ic || <span style={{ fontSize: 11, color: "#9ca3af" }}>없음</span>}</div>
+                        </label>
+                      ))}
+                    </div>
+                  </label>
                   <label style={S.label}>제목 <input name="title" style={S.input} defaultValue={modal.item?.title || ""} placeholder="예: Jira Board" /></label>
                   <label style={S.label}>URL <input name="url" style={S.input} defaultValue={modal.item?.url || ""} placeholder="https://..." /></label>
                   <label style={S.label}>설명 (선택) <input name="desc" style={S.input} defaultValue={modal.item?.description || ""} placeholder="간단한 설명" /></label>
@@ -283,16 +329,23 @@ export default function TeamLinkHub() {
   );
 }
 
-function LinkCard({ link, color, badge, onEdit, onDelete }) {
+function LinkCard({ link, color, badge, onEdit, onDelete, onMoveUp, onMoveDown }) {
   const domain = (() => { try { return new URL(link.url).hostname.replace("www.", ""); } catch { return ""; } })();
+  const hasIcon = link.icon && link.icon.trim();
   return (
     <a href={link.url} target="_blank" rel="noopener noreferrer" className="link-row" style={S.linkRow}>
       <div style={{ ...S.linkIcon, background: `${color}12`, color }}>
-        <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`} alt="" style={{ width: 22, height: 22, borderRadius: 4 }} onError={e => { e.target.style.display = "none"; e.target.parentElement.textContent = "🔗"; }} />
+        {hasIcon ? (
+          <span style={{ fontSize: 22, lineHeight: 1 }}>{link.icon}</span>
+        ) : (
+          <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`} alt="" style={{ width: 22, height: 22, borderRadius: 4 }} onError={e => { e.target.style.display = "none"; e.target.parentElement.textContent = "🔗"; }} />
+        )}
       </div>
       <div style={S.linkInfo}><span style={S.linkTitle}>{link.title}</span><span style={S.linkDesc}>{link.description || domain}</span></div>
       {badge && <span style={{ ...S.linkBadge, background: `${color}12`, color }}>{badge}</span>}
       <div style={S.linkActions} onClick={e => e.preventDefault()}>
+        {onMoveUp && <button className="link-action" onClick={onMoveUp} title="위로">▲</button>}
+        {onMoveDown && <button className="link-action" onClick={onMoveDown} title="아래로">▼</button>}
         <button className="link-action" onClick={onEdit}>✏️</button>
         <button className="link-action" onClick={onDelete}>🗑️</button>
       </div>
@@ -314,6 +367,13 @@ const CSS = `
   .cat-card:hover .cat-action { opacity: 1; }
   input:focus { outline: none; border-color: #6366f1 !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.15) !important; }
   input[type="radio"]:checked + .color-dot { border-color: #1a1a2e !important; }
+  .icon-dot {
+    width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; cursor: pointer; border: 2px solid #e5e7eb; transition: border-color 0.15s, background 0.15s;
+    background: #fff;
+  }
+  .icon-dot:hover { border-color: #6366f1; background: #f0f0ff; }
+  input[type="radio"]:checked + .icon-dot { border-color: #6366f1; background: #eef2ff; box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
 `;
 
 const S = {
@@ -366,11 +426,13 @@ const S = {
   linkActions: { display: "flex", gap: 2, flexShrink: 0 },
   addLinkRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", margin: "4px 8px 8px", borderRadius: 12, border: "2px dashed", background: "transparent", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: 0.6, transition: "opacity 0.15s" },
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" },
-  modal: { background: "#fff", borderRadius: 20, padding: "28px 32px", width: "90%", maxWidth: 420, boxShadow: "0 24px 80px rgba(0,0,0,0.18)" },
+  modal: { background: "#fff", borderRadius: 20, padding: "28px 32px", width: "90%", maxWidth: 440, boxShadow: "0 24px 80px rgba(0,0,0,0.18)", maxHeight: "85vh", overflowY: "auto" },
   modalTitle: { fontSize: 18, fontWeight: 700, marginBottom: 20 },
   form: { display: "flex", flexDirection: "column", gap: 14 },
   label: { fontSize: 13, fontWeight: 600, color: "#6b7280", display: "flex", flexDirection: "column", gap: 6 },
   input: { padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, fontFamily: "inherit", color: "#1a1a2e", background: "#f9fafb", transition: "border 0.15s, box-shadow 0.15s" },
+  iconGrid: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 },
+  iconLabel: { cursor: "pointer" },
   modalActions: { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 },
   cancelBtn: { background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 10, padding: "9px 20px", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", color: "#374151" },
   saveBtn: { background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 10, padding: "9px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
