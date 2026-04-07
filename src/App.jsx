@@ -1108,7 +1108,7 @@ const CSS = `
 const S = {
   root: { fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif", background: "#f0f1f5", minHeight: "100vh", color: "#1a1a2e" },
   hero: { background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)", padding: "36px 32px 40px", color: "#fff" },
-  heroInner: { maxWidth: 1160, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "stretch" },
+  heroInner: { maxWidth: 1160, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "end" },
   heroLeft: { display: "flex", flexDirection: "column" }, heroRight: { minWidth: 260, display: "flex", flexDirection: "column", gap: 10 },
   heroDate: { fontSize: 13, opacity: 0.6, marginBottom: 6, fontWeight: 500 },
   heroTitle: { fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 4 },
