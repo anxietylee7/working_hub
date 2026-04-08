@@ -726,7 +726,7 @@ export default function TeamLinkHub() {
               <h1 style={S.heroTitle}>{greeting} 👋</h1>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
-              <p style={{ ...S.heroSub, margin: 0 }}>선행AI팀 팀 업무에 필요한 모든 링크를 한 곳에서</p>
+              <p style={{ ...S.heroSub, margin: 0 }}>선행AI팀 워크스페이스 - 팀 업무에 필요한 모든 링크를 한 곳에서</p>
             </div>
             <div style={{ ...S.searchBox, marginTop: 16 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
