@@ -26,7 +26,7 @@ async function sbDelete(table, id) {
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const PALETTE = ["#6366f1", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
+const PALETTE = ["#4a90d9", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
 const LINK_ICONS = [
   "", "🔗", "📄", "📊", "📁", "📝", "📌", "🎯", "🚀", "💡",
   "📧", "💬", "📅", "🎨", "🛠️", "📈", "🔒", "🌐", "📱", "💻",
@@ -46,10 +46,78 @@ const LABEL_COLORS = [
   { id: "gray", name: "회색", bg: "#f3f4f6", text: "#374151" },
 ];
 
+// ─── Floating Remote (인트라넷 바로가기) ───
+const REMOTE_BUTTONS = [
+  { id: "attendance", emoji: "⏰", label: "근태 관리", url: "https://hr.smilegate.net/tlm/my-work-status", color: "#4a90d9" },
+  { id: "meeting", emoji: "🏢", label: "회의실 예약", url: "https://gea.smilegate.net/gea/reservation/meeting-room", color: "#10b981" },
+  { id: "salary", emoji: "💰", label: "급여 조회", url: "https://www.ipayview.com/Index.asp?com_code=Q776&emp_no=H33777", color: "#f59e0b" },
+  { id: "leave", emoji: "🏖️", label: "휴가 신청", url: "https://hr.smilegate.net/tlm/vacation-submit/submit", color: "#0ea5e9" },
+  { id: "overtime", emoji: "🕐", label: "계획외 근무", url: "https://hr.smilegate.net/tlm/work-submit/submit/unplanned-work", color: "#ec4899" },
+  { id: "welfare", emoji: "🎁", label: "복지몰", url: "https://sgcampus.ezwel.com/pc/product/main/welfare-mall", color: "#8b5cf6" },
+];
+
+function FloatingRemote() {
+  const [hovered, setHovered] = useState(null);
+
+  return (
+    <div style={{
+      position: "fixed", left: 16, top: "50%", transform: "translateY(-50%)",
+      display: "flex", flexDirection: "column", gap: 6, zIndex: 50,
+    }}>
+      <div style={{
+        background: "rgba(255, 255, 255, 0.85)", backdropFilter: "blur(12px)",
+        borderRadius: 16, padding: "12px 8px",
+        display: "flex", flexDirection: "column", gap: 4, alignItems: "center",
+        boxShadow: "0 4px 24px rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.15)",
+      }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: "#4a90d9", letterSpacing: "0.08em", marginBottom: 4, textTransform: "uppercase" }}>바로가기</div>
+        {REMOTE_BUTTONS.map(btn => (
+          <div key={btn.id} style={{ position: "relative" }}
+            onMouseEnter={() => setHovered(btn.id)}
+            onMouseLeave={() => setHovered(null)}
+          >
+            <a href={btn.url} target="_blank" rel="noopener noreferrer"
+              className="remote-btn"
+              style={{
+                width: 44, height: 44, borderRadius: 12,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 20, textDecoration: "none",
+                background: hovered === btn.id ? `${btn.color}18` : "#f0f7ff",
+                border: hovered === btn.id ? `1px solid ${btn.color}40` : "1px solid #e0ecf8",
+                transition: "all 0.2s",
+                cursor: "pointer",
+              }}
+            >
+              {btn.emoji}
+            </a>
+            {/* Tooltip */}
+            {hovered === btn.id && (
+              <div style={{
+                position: "absolute", left: 52, top: "50%", transform: "translateY(-50%)",
+                background: "#fff", color: "#1a2a3a",
+                padding: "6px 12px", borderRadius: 8,
+                fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
+                boxShadow: "0 4px 12px rgba(74,144,217,0.15)", border: "1px solid #d4e4f7",
+                pointerEvents: "none",
+              }}>
+                {btn.label}
+                <div style={{
+                  position: "absolute", left: -4, top: "50%", transform: "translateY(-50%) rotate(45deg)",
+                  width: 8, height: 8, background: "#fff", borderLeft: "1px solid #d4e4f7", borderBottom: "1px solid #d4e4f7",
+                }} />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Side Panel with file-holder tabs ───
 const NEWS_TABS = [
   { id: "llm", label: "💬 LLM 서비스", color: "#0ea5e9" },
-  { id: "ai", label: "🤖 AI 최신", color: "#6366f1" },
+  { id: "ai", label: "🤖 AI 최신", color: "#4a90d9" },
 ];
 
 function SidePanel() {
@@ -95,7 +163,7 @@ function SidePanel() {
 
   const currentFeed = feed[activeTab] || [];
   const activeTabData = NEWS_TABS.find(t => t.id === activeTab);
-  const activeColor = activeTabData?.color || "#6366f1";
+  const activeColor = activeTabData?.color || "#4a90d9";
   const tabTitle = activeTab === "ai" ? "🤖 AI 최신 소식" : "💬 LLM 서비스 뉴스";
 
   return (
@@ -157,7 +225,7 @@ function SidePanel() {
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#6b7280" }}>
               <span>{error}</span>
               <button onClick={() => fetchFeed(activeTab, true)}
-                style={{ background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>다시 시도</button>
+                style={{ background: "#4a90d9", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>다시 시도</button>
             </div>
           ) : currentFeed.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column" }}>
@@ -184,7 +252,7 @@ function SidePanel() {
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#9ca3af" }}>
               <span>뉴스가 없습니다</span>
               <button onClick={() => fetchFeed(activeTab, true)}
-                style={{ background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>불러오기</button>
+                style={{ background: "#4a90d9", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>불러오기</button>
             </div>
           )}
         </div>
@@ -245,7 +313,7 @@ function TodaySchedule() {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 18 }}>📅</span>
             <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{dateStr} 일정</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#c7d2fe" }}>{cal ? `${cal.todayCount}건` : "..."}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#a8d4f2" }}>{cal ? `${cal.todayCount}건` : "..."}</span>
           </div>
         </div>
 
@@ -538,7 +606,7 @@ function TodoBanner({ isAdmin }) {
             {isAdmin && (
               <div style={{ padding: "16px 24px", borderTop: "1px solid #f0f1f5", display: "flex", gap: 8 }}>
                 <input value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => e.key === "Enter" && addTodo()} placeholder="새 이슈 입력..." style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, fontFamily: "inherit" }} />
-                <button onClick={addTodo} disabled={saving} style={{ background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1 }}>추가</button>
+                <button onClick={addTodo} disabled={saving} style={{ background: "#4a90d9", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1 }}>추가</button>
               </div>
             )}
           </div>
@@ -568,7 +636,7 @@ export default function TeamLinkHub() {
   const qlFormRef = useRef(null);
   const pwRef = useRef(null);
 
-  const QL_COLORS = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
+  const QL_COLORS = ["#4a90d9", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
   const QL_EMOJIS = ["📝", "🧪", "✅", "📋", "🔗", "💡", "🚀", "📊", "🎯", "⚙️", "📁", "🌐"];
 
   const handleLogin = async () => {
@@ -715,7 +783,7 @@ export default function TeamLinkHub() {
       const title = f.querySelector('[name="ql_title"]').value.trim();
       const url = f.querySelector('[name="ql_url"]').value.trim();
       const emoji = f.querySelector('[name="ql_emoji"]:checked')?.value || "🔗";
-      const color = f.querySelector('[name="ql_color"]:checked')?.value || "#6366f1";
+      const color = f.querySelector('[name="ql_color"]:checked')?.value || "#4a90d9";
       const fullUrl = url && !url.startsWith("http") ? `https://${url}` : url;
       await sbPatch("quicklinks", qlModal.id, { title, url: fullUrl, emoji, color });
       await fetchAll();
@@ -727,7 +795,7 @@ export default function TeamLinkHub() {
   const handleQlClear = async (id) => {
     setSaving(true);
     try {
-      await sbPatch("quicklinks", id, { title: "", url: "", emoji: "🔗", color: "#6366f1" });
+      await sbPatch("quicklinks", id, { title: "", url: "", emoji: "🔗", color: "#4a90d9" });
       await fetchAll();
     } catch (e) { console.error("QL clear error:", e); }
     setSaving(false);
@@ -746,6 +814,7 @@ export default function TeamLinkHub() {
   return (
     <div style={S.root}>
       <style>{CSS}</style>
+      <FloatingRemote />
 
       <header style={S.hero}>
         <div style={S.heroInner}>
@@ -809,7 +878,7 @@ export default function TeamLinkHub() {
                         {isAdmin && idx > 0 && <button style={S.catMoveBtn} onClick={() => moveCat(cat.id, -1)} title="왼쪽으로">◀</button>}
                         <button
                           onClick={() => setActiveTab(cat.id)}
-                          style={{ ...S.catPill, ...(isActive ? { background: cat.color || "#6366f1", color: "#fff", borderColor: cat.color || "#6366f1" } : {}) }}
+                          style={{ ...S.catPill, ...(isActive ? { background: cat.color || "#4a90d9", color: "#fff", borderColor: cat.color || "#4a90d9" } : {}) }}
                         >
                           {cat.name}
                           {isAdmin && isActive && (
@@ -976,7 +1045,7 @@ export default function TeamLinkHub() {
                 <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
                   {QL_COLORS.map(c => (
                     <label key={c} style={{ cursor: "pointer" }}>
-                      <input type="radio" name="ql_color" value={c} defaultChecked={c === (qlModal.color || "#6366f1")} style={{ display: "none" }} />
+                      <input type="radio" name="ql_color" value={c} defaultChecked={c === (qlModal.color || "#4a90d9")} style={{ display: "none" }} />
                       <div className="color-dot" style={{ width: 28, height: 28, borderRadius: "50%", background: c, border: "3px solid transparent", transition: "border 0.15s" }} />
                     </label>
                   ))}
@@ -1063,22 +1132,22 @@ const CSS = `
   .quick-link:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important; }
   .tab-action-pill { background: none; border: none; cursor: pointer; font-size: 11px; padding: 2px 3px; border-radius: 4px; opacity: 0.7; transition: opacity 0.15s; }
   .tab-action-pill:hover { opacity: 1; background: rgba(255,255,255,0.25); }
-  input:focus { outline: none; border-color: #6366f1 !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.15) !important; }
+  input:focus { outline: none; border-color: #4a90d9 !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.15) !important; }
   input[type="radio"]:checked + .color-dot { border-color: #1a1a2e !important; }
   .icon-dot {
     width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
     font-size: 18px; cursor: pointer; border: 2px solid #e5e7eb; transition: border-color 0.15s, background 0.15s; background: #fff;
   }
-  .icon-dot:hover { border-color: #6366f1; background: #f0f0ff; }
-  input[type="radio"]:checked + .icon-dot { border-color: #6366f1; background: #eef2ff; box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
-  input[type="radio"]:checked + .label-color-dot { border-color: #1e1b4b !important; }
+  .icon-dot:hover { border-color: #4a90d9; background: #f0f0ff; }
+  input[type="radio"]:checked + .icon-dot { border-color: #4a90d9; background: #e8f4fd; box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
+  input[type="radio"]:checked + .label-color-dot { border-color: #4a90d9 !important; }
   .label-color-dot:hover { opacity: 0.8; }
   .news-item { text-decoration: none; color: inherit; transition: background 0.15s; }
   .news-item:hover { background: #f8f9fb !important; }
   .inf-card { transition: background 0.15s; }
   .inf-card:hover { background: #f8f9fb !important; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes linkFlash { 0% { background: #eef2ff; } 100% { background: transparent; } }
+  @keyframes linkFlash { 0% { background: #e8f4fd; } 100% { background: transparent; } }
   .link-moved { animation: linkFlash 0.6s ease-out; }
   .task-banner { cursor: pointer; transition: background 0.15s; }
   .task-banner:hover { background: rgba(255,255,255,0.18) !important; }
@@ -1087,70 +1156,72 @@ const CSS = `
   div:hover > .ql-actions { opacity: 1; }
   .file-holder-tab { outline: none; }
   .file-holder-tab:hover { opacity: 0.85; }
+  .remote-btn { transition: all 0.2s; }
+  .remote-btn:hover { transform: scale(1.1); }
 `;
 
 const S = {
-  root: { fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif", background: "#f0f1f5", minHeight: "100vh", color: "#1a1a2e" },
-  hero: { background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)", padding: "36px 32px 40px", color: "#fff" },
+  root: { fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif", background: "#f0f7ff", minHeight: "100vh", color: "#1a2a3a" },
+  hero: { background: "linear-gradient(135deg, #4a90d9 0%, #6db3f2 50%, #89c4f4 100%)", padding: "36px 32px 40px", color: "#fff" },
   heroInner: { maxWidth: 1160, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "end" },
   heroLeft: { display: "flex", flexDirection: "column" }, heroRight: { width: 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10 },
-  heroDate: { fontSize: 13, opacity: 0.6, marginBottom: 6, fontWeight: 500 },
+  heroDate: { fontSize: 13, opacity: 0.7, marginBottom: 6, fontWeight: 500 },
   heroTitle: { fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 4 },
-  heroSub: { fontSize: 14, opacity: 0.7, fontWeight: 400 },
-  searchBox: { display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.12)", backdropFilter: "blur(8px)", borderRadius: 12, padding: "10px 16px", minWidth: 240, border: "1px solid rgba(255,255,255,0.15)" },
+  heroSub: { fontSize: 14, opacity: 0.8, fontWeight: 400 },
+  searchBox: { display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(8px)", borderRadius: 12, padding: "10px 16px", minWidth: 240, border: "1px solid rgba(255,255,255,0.25)" },
   searchInput: { border: "none", background: "transparent", fontSize: 14, flex: 1, outline: "none", fontFamily: "inherit", color: "#fff" },
-  clearBtn: { background: "rgba(255,255,255,0.2)", border: "none", cursor: "pointer", color: "#fff", fontSize: 11, padding: "2px 6px", borderRadius: 4 },
+  clearBtn: { background: "rgba(255,255,255,0.25)", border: "none", cursor: "pointer", color: "#fff", fontSize: 11, padding: "2px 6px", borderRadius: 4 },
 
-  taskBanner: { display: "flex", alignItems: "center", gap: 12, marginTop: 12, padding: "10px 16px", background: "rgba(255,255,255,0.1)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", color: "#fff" },
+  taskBanner: { display: "flex", alignItems: "center", gap: 12, marginTop: 12, padding: "10px 16px", background: "rgba(255,255,255,0.15)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.2)", color: "#fff" },
   taskMarquee: { flex: 1, overflow: "hidden" },
   taskMarqueeInner: { display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap" },
   taskDivider: { opacity: 0.3 },
-  taskPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 700, height: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
-  taskPopupHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #f0f1f5" },
+  taskPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 700, height: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.15)", overflow: "hidden" },
+  taskPopupHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #e8f0fe" },
   taskPopupClose: { background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#9ca3af", padding: "4px 8px", borderRadius: 6 },
   taskIframe: { flex: 1, width: "100%", border: "none" },
 
-  calPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
-  calDateHeader: { fontSize: 14, fontWeight: 700, color: "#1e1b4b", padding: "8px 0 4px", borderBottom: "1px solid #f0f1f5", marginBottom: 4 },
-  calEvent: { display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderBottom: "1px solid #f9fafb" },
-  calEventTime: { fontSize: 13, fontWeight: 600, color: "#6366f1", minWidth: 44, flexShrink: 0 },
-  todoPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
-  weekNavBtn: { background: "none", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 12, color: "#6b7280", fontFamily: "inherit" },
-  weekTodayBtn: { background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#4338ca", fontFamily: "inherit" },
-  scheduleCard: { background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.12)", width: 300, overflow: "hidden" },
-  scheduleHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.08)" },
+  calPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.15)", overflow: "hidden" },
+  calDateHeader: { fontSize: 14, fontWeight: 700, color: "#2d6cb4", padding: "8px 0 4px", borderBottom: "1px solid #e8f0fe", marginBottom: 4 },
+  calEvent: { display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderBottom: "1px solid #f5f9ff" },
+  calEventTime: { fontSize: 13, fontWeight: 600, color: "#4a90d9", minWidth: 44, flexShrink: 0 },
+  todoPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.15)", overflow: "hidden" },
+  weekNavBtn: { background: "none", border: "1px solid #d4e4f7", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 12, color: "#6b7280", fontFamily: "inherit" },
+  weekTodayBtn: { background: "#e8f4fd", border: "1px solid #a8d4f2", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#2d6cb4", fontFamily: "inherit" },
+  scheduleCard: { background: "rgba(255,255,255,0.15)", backdropFilter: "blur(12px)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.2)", width: 300, overflow: "hidden" },
+  scheduleHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.12)" },
   scheduleList: { padding: "4px 0", maxHeight: 220, overflowY: "auto" },
   scheduleItem: { display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 18px" },
-  scheduleTime: { fontSize: 12, fontWeight: 700, color: "#c7d2fe", minWidth: 36, flexShrink: 0, marginTop: 1 },
+  scheduleTime: { fontSize: 12, fontWeight: 700, color: "#b8dcf8", minWidth: 36, flexShrink: 0, marginTop: 1 },
   twoCol: { maxWidth: 1160, margin: "0 auto", padding: "0 32px 64px", display: "grid", gridTemplateColumns: "1fr 320px", gap: 24, alignItems: "start" },
   mainCol: { minWidth: 0 },
   sideCol: { position: "sticky", top: 24 },
-  statsStrip: { display: "flex", alignItems: "center", gap: 20, padding: "18px 24px", margin: "-20px 0 24px", background: "#fff", borderRadius: 14, boxShadow: "0 4px 20px rgba(0,0,0,0.06)", position: "relative", zIndex: 2 },
+  statsStrip: { display: "flex", alignItems: "center", gap: 20, padding: "18px 24px", margin: "-20px 0 24px", background: "#fff", borderRadius: 14, boxShadow: "0 4px 20px rgba(74,144,217,0.08)", position: "relative", zIndex: 2 },
   statItem: { display: "flex", alignItems: "baseline", gap: 6 },
-  statNum: { fontSize: 22, fontWeight: 800, color: "#1e1b4b" },
+  statNum: { fontSize: 22, fontWeight: 800, color: "#2d6cb4" },
   statLabel: { fontSize: 13, color: "#6b7280", fontWeight: 500 },
-  statDivider: { width: 1, height: 24, background: "#e5e7eb" },
-  refreshBtn: { background: "none", border: "1px solid #e5e7eb", borderRadius: 10, padding: "8px 12px", cursor: "pointer", fontSize: 16, transition: "background 0.15s" },
-  addCatBtn: { display: "flex", alignItems: "center", gap: 6, background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 10, padding: "9px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
+  statDivider: { width: 1, height: 24, background: "#d4e4f7" },
+  refreshBtn: { background: "none", border: "1px solid #d4e4f7", borderRadius: 10, padding: "8px 12px", cursor: "pointer", fontSize: 16, transition: "background 0.15s" },
+  addCatBtn: { display: "flex", alignItems: "center", gap: 6, background: "#4a90d9", color: "#fff", border: "none", borderRadius: 10, padding: "9px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
   searchLabel: { fontSize: 14, color: "#6b7280", marginBottom: 16 },
   emptyState: { textAlign: "center", padding: 60, color: "#9ca3af" },
   listWrap: { background: "#fff", borderRadius: 14, padding: 8, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
 
   quickLinks: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 16 },
-  quickLink: { display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "#fff", borderRadius: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", cursor: "pointer" },
-  quickLinkEmpty: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px 16px", background: "#fff", borderRadius: 12, border: "2px dashed #e5e7eb", cursor: "pointer", fontFamily: "inherit", width: "100%", transition: "border-color 0.15s" },
+  quickLink: { display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "#fff", borderRadius: 12, boxShadow: "0 1px 4px rgba(74,144,217,0.06)", cursor: "pointer" },
+  quickLinkEmpty: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px 16px", background: "#fff", borderRadius: 12, border: "2px dashed #d4e4f7", cursor: "pointer", fontFamily: "inherit", width: "100%", transition: "border-color 0.15s" },
   qlActions: { position: "absolute", top: 4, right: 4, display: "flex", gap: 2 },
 
   catTabBar: { marginBottom: 0, overflowX: "auto" },
   catTabList: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", padding: "16px 20px", background: "#fff", borderRadius: "16px 16px 0 0", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
-  catPill: { display: "flex", alignItems: "center", gap: 4, padding: "7px 18px", background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#6b7280", transition: "all 0.15s", whiteSpace: "nowrap" },
-  catPillAdd: { width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", border: "1.5px dashed #d1d5db", borderRadius: "50%", fontSize: 16, cursor: "pointer", fontFamily: "inherit", color: "#9ca3af", transition: "all 0.15s" },
+  catPill: { display: "flex", alignItems: "center", gap: 4, padding: "7px 18px", background: "#fff", border: "1.5px solid #d4e4f7", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#6b7280", transition: "all 0.15s", whiteSpace: "nowrap" },
+  catPillAdd: { width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", border: "1.5px dashed #b8d4ed", borderRadius: "50%", fontSize: 16, cursor: "pointer", fontFamily: "inherit", color: "#9ca3af", transition: "all 0.15s" },
   catMoveBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 10, color: "#9ca3af", padding: "2px", opacity: 0.5, transition: "opacity 0.15s" },
   catTabActions: { display: "inline-flex", gap: 2, marginLeft: 4 },
 
   catGrid: { display: "flex", flexDirection: "column", gap: 20 },
   catCard: { background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)" },
-  catContentBox: { background: "#fff", borderRadius: "0 0 16px 16px", minHeight: 400, maxHeight: 480, overflowY: "auto", borderTop: "1px solid #f0f1f5" },
+  catContentBox: { background: "#fff", borderRadius: "0 0 16px 16px", minHeight: 400, maxHeight: 480, overflowY: "auto", borderTop: "1px solid #e8f0fe" },
   catActions: { display: "flex", gap: 4 },
   catBody: { padding: 8, display: "flex", flexDirection: "column", gap: 2 },
   linkRow: { display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderRadius: 12, cursor: "pointer" },
@@ -1161,35 +1232,35 @@ const S = {
   linkBadge: { fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 10px", flexShrink: 0 },
   linkActions: { display: "flex", gap: 2, flexShrink: 0 },
   addLinkRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", margin: "4px 8px 8px", borderRadius: 12, border: "2px dashed", background: "transparent", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: 0.6, transition: "opacity 0.15s" },
-  newsPanel: { background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)" },
+  newsPanel: { background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(74,144,217,0.06)" },
   newsPanelHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px 12px" },
   newsPanelTitle: { fontSize: 16, fontWeight: 700 },
-  newsRefresh: { background: "none", border: "1px solid #e5e7eb", borderRadius: 8, padding: "4px 8px", cursor: "pointer", fontSize: 14 },
+  newsRefresh: { background: "none", border: "1px solid #d4e4f7", borderRadius: 8, padding: "4px 8px", cursor: "pointer", fontSize: 14 },
   newsTabs: { display: "flex", gap: 6, padding: "0 20px 12px" },
-  newsTab: { background: "#f3f4f6", border: "none", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#6b7280", transition: "all 0.15s" },
-  newsTabActive: { background: "#1e1b4b", color: "#fff" },
-  newsContent: { borderTop: "1px solid #f0f1f5" },
+  newsTab: { background: "#f0f7ff", border: "none", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#6b7280", transition: "all 0.15s" },
+  newsTabActive: { background: "#4a90d9", color: "#fff" },
+  newsContent: { borderTop: "1px solid #e8f0fe" },
   newsLoading: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px" },
-  spinner: { width: 28, height: 28, border: "3px solid #e5e7eb", borderTopColor: "#6366f1", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
+  spinner: { width: 28, height: 28, border: "3px solid #d4e4f7", borderTopColor: "#4a90d9", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
   newsError: { display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#6b7280" },
   newsList: { display: "flex", flexDirection: "column" },
-  newsItem: { display: "flex", gap: 12, padding: "14px 20px", borderBottom: "1px solid #f5f5f5", cursor: "pointer" },
-  newsRank: { width: 24, height: 24, borderRadius: 6, background: "linear-gradient(135deg, #6366f1, #818cf8)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0, marginTop: 2 },
+  newsItem: { display: "flex", gap: 12, padding: "14px 20px", borderBottom: "1px solid #f5f9ff", cursor: "pointer" },
+  newsRank: { width: 24, height: 24, borderRadius: 6, background: "linear-gradient(135deg, #4a90d9, #6db3f2)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0, marginTop: 2 },
   newsItemContent: { flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 },
   newsItemTitle: { fontSize: 13, fontWeight: 600, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" },
   newsItemSummary: { fontSize: 12, color: "#6b7280", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" },
   newsItemMeta: { fontSize: 11, color: "#9ca3af" },
-  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" },
-  modal: { background: "#fff", borderRadius: 20, padding: "28px 32px", width: "90%", maxWidth: 440, boxShadow: "0 24px 80px rgba(0,0,0,0.18)", maxHeight: "85vh", overflowY: "auto" },
-  modalTitle: { fontSize: 18, fontWeight: 700, marginBottom: 20 },
+  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" },
+  modal: { background: "#fff", borderRadius: 20, padding: "28px 32px", width: "90%", maxWidth: 440, boxShadow: "0 24px 80px rgba(0,0,0,0.15)", maxHeight: "85vh", overflowY: "auto" },
+  modalTitle: { fontSize: 18, fontWeight: 700, marginBottom: 20, color: "#1a2a3a" },
   form: { display: "flex", flexDirection: "column", gap: 14 },
   label: { fontSize: 13, fontWeight: 600, color: "#6b7280", display: "flex", flexDirection: "column", gap: 6 },
-  input: { padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, fontFamily: "inherit", color: "#1a1a2e", background: "#f9fafb", transition: "border 0.15s, box-shadow 0.15s" },
+  input: { padding: "10px 14px", borderRadius: 10, border: "1px solid #d4e4f7", fontSize: 14, fontFamily: "inherit", color: "#1a2a3a", background: "#f8fbff", transition: "border 0.15s, box-shadow 0.15s" },
   iconGrid: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 },
   iconLabel: { cursor: "pointer" },
   modalActions: { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 },
-  cancelBtn: { background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 10, padding: "9px 20px", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", color: "#374151" },
-  saveBtn: { background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 10, padding: "9px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
-  loginBtn: { display: "flex", alignItems: "center", gap: 4, background: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 10, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#6b7280", transition: "all 0.15s" },
-  logoutBtn: { display: "flex", alignItems: "center", gap: 4, background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: 10, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#4338ca", transition: "all 0.15s" },
+  cancelBtn: { background: "#f0f7ff", border: "1px solid #d4e4f7", borderRadius: 10, padding: "9px 20px", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", color: "#4a6a8a" },
+  saveBtn: { background: "#4a90d9", color: "#fff", border: "none", borderRadius: 10, padding: "9px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
+  loginBtn: { display: "flex", alignItems: "center", gap: 4, background: "#f0f7ff", border: "1px solid #d4e4f7", borderRadius: 10, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#4a6a8a", transition: "all 0.15s" },
+  logoutBtn: { display: "flex", alignItems: "center", gap: 4, background: "#e8f4fd", border: "1px solid #a8d4f2", borderRadius: 10, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#2d6cb4", transition: "all 0.15s" },
 };
