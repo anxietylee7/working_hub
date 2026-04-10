@@ -48,12 +48,12 @@ const LABEL_COLORS = [
 
 // ─── Side Panel with file-holder tabs ───
 const NEWS_TABS = [
-  { id: "ai", label: "🤖 AI 최신", color: "#6366f1" },
   { id: "llm", label: "💬 LLM 서비스", color: "#0ea5e9" },
+  { id: "ai", label: "🤖 AI 최신", color: "#6366f1" },
 ];
 
 function SidePanel() {
-  const [activeTab, setActiveTab] = useState("ai");
+  const [activeTab, setActiveTab] = useState("llm");
   const [feed, setFeed] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
