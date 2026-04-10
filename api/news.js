@@ -12,6 +12,19 @@ const CACHE_TTL_MS = 60 * 60 * 1000;
 const CATEGORY_QUERIES = {
   "AI 기술": ["AI 딥러닝 모델 연구", "인공지능 논문 신기술"],
   "LLM 서비스": ["ChatGPT Claude Gemini LLM", "GPT AI 서비스 업데이트"],
+  // ─── Threads 인플루언서 피드 (Google News에서 관련 활동/언급 검색) ───
+  "@choi.openai Threads 최신 포스트": [
+    "choi.openai 스레드 AI",
+    "choi.openai AI 인플루언서",
+    "스레드 AI 트렌드 한국 최신",
+    "Threads AI 한국 인플루언서 소식",
+  ],
+  "@seize.the.future Threads 최신 포스트": [
+    "seize.the.future 스레드 AI",
+    "미래를잡다 AI 인사이트",
+    "스레드 AI 뉴스 한국 최신",
+    "Threads AI 트렌드 한국 소식",
+  ],
 };
 
 async function fetchRSS(query) {
@@ -27,7 +40,6 @@ async function fetchRSS(query) {
 
   const text = await res.text();
 
-  // XML인지 확인
   if (!text.includes("<item>")) {
     return [];
   }
@@ -62,7 +74,6 @@ function extractTag(xml, tag) {
 }
 
 function extractLink(xml) {
-  // <link> 태그가 비어있고 URL이 텍스트 노드로 올 수 있음
   const m = xml.match(/<link\s*\/?>([^<]+)/);
   if (m) return m[1].trim();
   const m2 = xml.match(/<link[^>]*href="([^"]+)"/);
@@ -80,7 +91,6 @@ function fmtDate(s) {
   } catch { return s; }
 }
 
-// 여러 쿼리로 검색 후 중복 제거, 합치기
 async function fetchGoogleNews(queries) {
   const all = [];
   const seen = new Set();
