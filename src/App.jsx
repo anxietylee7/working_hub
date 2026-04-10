@@ -98,7 +98,7 @@ function FloatingRemote() {
                 padding: "6px 12px", borderRadius: 8,
                 fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
                 boxShadow: "0 4px 12px rgba(74,144,217,0.15)", border: "1px solid #d4e4f7",
-                pointerEvents: "none",
+                pointerEvents: "none", zIndex: 999,
               }}>
                 {btn.label}
                 <div style={{
@@ -424,11 +424,11 @@ function TaskBanner() {
               <>
                 <span style={{ fontWeight: 700 }}>LAM TASK 현황</span>
                 <span style={S.taskDivider}>|</span>
-                <span style={{ color: "#f59e0b" }}>진행중 {stats.inProgress}건</span>
+                <span style={{ color: "#fcd34d" }}>진행중 {stats.inProgress}건</span>
                 <span style={S.taskDivider}>·</span>
-                <span style={{ color: "#6b7280" }}>대기 {stats.waiting}건</span>
+                <span style={{ color: "rgba(255,255,255,0.8)" }}>대기 {stats.waiting}건</span>
                 <span style={S.taskDivider}>·</span>
-                <span style={{ color: "#10b981" }}>완료 {stats.done}건</span>
+                <span style={{ color: "#6ee7b7" }}>완료 {stats.done}건</span>
                 <span style={S.taskDivider}>|</span>
                 <span style={{ opacity: 0.6 }}>총 {stats.total}건</span>
               </>
