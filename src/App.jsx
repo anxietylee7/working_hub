@@ -72,7 +72,7 @@ function SidePanel() {
       let tabLabel;
       const inf = INFLUENCERS.find(i => i.id === tabId);
       if (inf) {
-        tabLabel = `스레드(Threads) 계정 ${inf.handle} (${inf.name})의 최근 게시물 요약. 이 계정은 한국 AI 인플루언서입니다. 최신 Threads 포스트 내용을 5개 요약해주세요.`;
+        tabLabel = `${inf.handle} Threads 최신 포스트`;
       } else {
         tabLabel = "LLM 서비스";
       }
@@ -104,7 +104,7 @@ function SidePanel() {
   return (
     <div style={{ marginTop: -20 }}>
       {/* File-holder tabs at top */}
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 0, paddingLeft: 8 }}>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 3, paddingLeft: 8 }}>
         {ALL_TABS.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -113,19 +113,20 @@ function SidePanel() {
               onClick={() => setActiveTab(tab.id)}
               className="file-holder-tab"
               style={{
-                padding: "8px 14px 10px",
-                background: isActive ? "#fff" : `${tab.color}15`,
-                border: `2px solid ${isActive ? tab.color : "transparent"}`,
-                borderBottom: isActive ? "2px solid #fff" : "2px solid transparent",
-                borderRadius: "12px 12px 0 0",
+                padding: isActive ? "8px 14px 10px" : "6px 12px 8px",
+                background: "#fff",
+                border: `2px solid ${tab.color}`,
+                borderBottom: isActive ? "2px solid #fff" : `2px solid ${tab.color}`,
+                borderRadius: "10px 10px 0 0",
                 cursor: "pointer", fontFamily: "inherit",
-                fontSize: 11, fontWeight: 700,
-                color: isActive ? tab.color : "#9ca3af",
+                fontSize: isActive ? 11 : 10, fontWeight: 700,
+                color: tab.color,
                 transition: "all 0.2s",
                 position: "relative",
                 zIndex: isActive ? 3 : 1,
                 marginBottom: -2,
                 minWidth: 0,
+                opacity: isActive ? 1 : 0.6,
               }}
             >
               <span style={{
@@ -135,10 +136,6 @@ function SidePanel() {
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
               }}>{tab.label}</span>
-              {isActive && <div style={{
-                position: "absolute", bottom: -2, left: 8, right: 8, height: 3,
-                background: tab.color, borderRadius: "2px 2px 0 0",
-              }} />}
             </button>
           );
         })}
