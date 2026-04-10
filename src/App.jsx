@@ -52,27 +52,39 @@ const INFLUENCERS = [
   { id: "seize.the.future", name: "미래를잡다", handle: "@seize.the.future", desc: "AI 뉴스 · 인사이트", color: "#10b981" },
 ];
 
-function InfluencerFeed() {
-  const [selectedId, setSelectedId] = useState(null);
+// ─── Side Panel with file-holder tabs ───
+function SidePanel() {
+  const [activeTab, setActiveTab] = useState(INFLUENCERS[0].id);
   const [feed, setFeed] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchFeed = useCallback(async (influencerId, force = false) => {
-    if (!force && feed[influencerId]?.length) return;
+  const ALL_TABS = [
+    ...INFLUENCERS.map(inf => ({ id: inf.id, label: inf.handle, color: inf.color, type: "influencer", name: inf.name, desc: inf.desc })),
+    { id: "llm", label: "LLM 뉴스", color: "#6b7280", type: "news", name: "LLM 서비스", desc: "" },
+  ];
+
+  const fetchFeed = useCallback(async (tabId, force = false) => {
+    if (!force && feed[tabId]?.length) return;
     setLoading(true);
     setError(null);
     try {
-      const inf = INFLUENCERS.find(i => i.id === influencerId);
+      let tabLabel;
+      const inf = INFLUENCERS.find(i => i.id === tabId);
+      if (inf) {
+        tabLabel = `스레드(Threads) 계정 ${inf.handle} (${inf.name})의 최근 게시물 요약. 이 계정은 한국 AI 인플루언서입니다. 최신 Threads 포스트 내용을 5개 요약해주세요.`;
+      } else {
+        tabLabel = "LLM 서비스";
+      }
       const r = await fetch("/api/news", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tab: `Threads ${inf?.handle || influencerId} 최신 게시물`, force }),
+        body: JSON.stringify({ tab: tabLabel, force }),
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "API 오류");
       if (data.news?.length) {
-        setFeed(prev => ({ ...prev, [influencerId]: data.news }));
+        setFeed(prev => ({ ...prev, [tabId]: data.news }));
       } else {
         throw new Error("피드를 찾을 수 없습니다");
       }
@@ -82,220 +94,152 @@ function InfluencerFeed() {
     setLoading(false);
   }, [feed]);
 
-  const currentFeed = selectedId ? (feed[selectedId] || []) : [];
+  useEffect(() => { fetchFeed(activeTab); }, [activeTab]);
+
+  const currentFeed = feed[activeTab] || [];
+  const activeTabData = ALL_TABS.find(t => t.id === activeTab);
+  const activeColor = activeTabData?.color || "#6366f1";
+  const activeInf = INFLUENCERS.find(i => i.id === activeTab);
 
   return (
-    <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
-      {/* Influencer cards */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "12px 16px" }}>
-        {INFLUENCERS.map(inf => (
-          <div
-            key={inf.id}
-            className="inf-card"
-            onClick={() => {
-              if (selectedId === inf.id) {
-                setSelectedId(null);
-              } else {
-                setSelectedId(inf.id);
-                fetchFeed(inf.id);
-              }
-            }}
-            style={{
-              display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
-              borderRadius: 12, cursor: "pointer", transition: "all 0.15s",
-              background: selectedId === inf.id ? `${inf.color}0d` : "transparent",
-              border: selectedId === inf.id ? `1.5px solid ${inf.color}30` : "1.5px solid transparent",
-            }}
-          >
-            <div style={{
-              width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-              background: `linear-gradient(135deg, ${inf.color}, ${inf.color}99)`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#fff", fontSize: 14, fontWeight: 700,
-            }}>
-              {inf.name[0]}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a2e" }}>{inf.name}</span>
-                <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 500 }}>{inf.handle}</span>
-              </div>
-              <div style={{ fontSize: 11, color: "#6b7280", marginTop: 1 }}>{inf.desc}</div>
-            </div>
-            <a
-              href={`https://www.threads.net/${inf.handle}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={e => e.stopPropagation()}
+    <div style={{ marginTop: -20 }}>
+      {/* File-holder tabs at top */}
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 0, paddingLeft: 8 }}>
+        {ALL_TABS.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="file-holder-tab"
               style={{
-                fontSize: 11, fontWeight: 600, color: inf.color, textDecoration: "none",
-                padding: "4px 10px", borderRadius: 8, background: `${inf.color}10`,
-                transition: "background 0.15s", flexShrink: 0,
+                padding: "8px 14px 10px",
+                background: isActive ? "#fff" : `${tab.color}15`,
+                border: `2px solid ${isActive ? tab.color : "transparent"}`,
+                borderBottom: isActive ? "2px solid #fff" : "2px solid transparent",
+                borderRadius: "12px 12px 0 0",
+                cursor: "pointer", fontFamily: "inherit",
+                fontSize: 11, fontWeight: 700,
+                color: isActive ? tab.color : "#9ca3af",
+                transition: "all 0.2s",
+                position: "relative",
+                zIndex: isActive ? 3 : 1,
+                marginBottom: -2,
+                minWidth: 0,
               }}
             >
+              <span style={{
+                display: "inline-block",
+                maxWidth: 90,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}>{tab.label}</span>
+              {isActive && <div style={{
+                position: "absolute", bottom: -2, left: 8, right: 8, height: 3,
+                background: tab.color, borderRadius: "2px 2px 0 0",
+              }} />}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Panel body */}
+      <div style={{
+        background: "#fff", borderRadius: "0 12px 16px 16px",
+        border: `2px solid ${activeColor}`, borderTop: `2px solid ${activeColor}`,
+        height: 580, display: "flex", flexDirection: "column",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+        overflow: "hidden",
+      }}>
+        {/* Profile header for influencer tabs */}
+        {activeInf && (
+          <div style={{
+            padding: "14px 18px 12px", borderBottom: "1px solid #f0f1f5",
+            display: "flex", alignItems: "center", gap: 10, flexShrink: 0,
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+              background: `linear-gradient(135deg, ${activeColor}, ${activeColor}88)`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#fff", fontSize: 14, fontWeight: 700,
+            }}>{activeInf.name[0]}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a2e" }}>{activeInf.name}</div>
+              <div style={{ fontSize: 11, color: "#9ca3af" }}>{activeInf.desc}</div>
+            </div>
+            <a href={`https://www.threads.net/${activeInf.handle}`} target="_blank" rel="noopener noreferrer"
+              style={{ fontSize: 11, fontWeight: 600, color: activeColor, textDecoration: "none", padding: "4px 10px", borderRadius: 8, background: `${activeColor}10`, flexShrink: 0 }}>
               Threads ↗
             </a>
           </div>
-        ))}
-      </div>
+        )}
 
-      {/* Feed area */}
-      {selectedId && (
-        <div style={{ borderTop: "1px solid #f0f1f5" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px 6px" }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#1a1a2e" }}>
-              📝 {INFLUENCERS.find(i => i.id === selectedId)?.name} 최근 피드
-            </span>
-            <button
-              onClick={() => { setFeed(prev => { const n = { ...prev }; delete n[selectedId]; return n; }); fetchFeed(selectedId, true); }}
-              style={{ background: "none", border: "1px solid #e5e7eb", borderRadius: 6, padding: "2px 6px", cursor: "pointer", fontSize: 12 }}
-            >🔄</button>
-          </div>
-          <div style={{ padding: "0 16px 12px" }}>
-            {loading ? (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 0" }}>
-                <div style={S.spinner} />
-                <span style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>AI가 최신 피드를 가져오는 중...</span>
-              </div>
-            ) : error ? (
-              <div style={{ textAlign: "center", padding: "20px 0", fontSize: 12, color: "#6b7280" }}>
-                <span>{error}</span>
-                <button onClick={() => fetchFeed(selectedId, true)} style={{ display: "block", margin: "8px auto 0", background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>다시 시도</button>
-              </div>
-            ) : currentFeed.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {currentFeed.map((item, i) => (
-                  <a
-                    key={i}
-                    href={item.url || `https://www.threads.net/${INFLUENCERS.find(inf => inf.id === selectedId)?.handle}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="news-item"
-                    style={{ display: "flex", gap: 8, padding: "10px 12px", borderRadius: 10, cursor: "pointer", textDecoration: "none", color: "inherit", borderBottom: "1px solid #f5f5f5" }}
-                  >
-                    <div style={{
-                      width: 20, height: 20, borderRadius: 5, flexShrink: 0, marginTop: 1,
-                      background: `linear-gradient(135deg, ${INFLUENCERS.find(inf => inf.id === selectedId)?.color || "#6366f1"}, ${INFLUENCERS.find(inf => inf.id === selectedId)?.color || "#6366f1"}88)`,
-                      color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700,
-                    }}>{i + 1}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.title}</div>
-                      {item.summary && <div style={{ fontSize: 11, color: "#6b7280", marginTop: 3, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.summary}</div>}
-                      {item.date && <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 3 }}>{item.date}</div>}
-                    </div>
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <div style={{ textAlign: "center", padding: "20px 0", fontSize: 12, color: "#9ca3af" }}>
-                피드를 불러오려면 새로고침 버튼을 눌러주세요
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── AI News Feed (LLM only) ───
-function LLMNewsFeed() {
-  const [news, setNews] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const fetchNews = useCallback(async (force = false) => {
-    if (!force && news.length) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const r = await fetch("/api/news", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tab: "LLM 서비스", force }),
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error || "API 오류");
-      if (data.news?.length) {
-        setNews(data.news);
-      } else {
-        throw new Error("뉴스를 찾을 수 없습니다");
-      }
-    } catch (e) {
-      setError(e.message || "뉴스를 불러올 수 없습니다");
-    }
-    setLoading(false);
-  }, [news]);
-
-  useEffect(() => { fetchNews(); }, []);
-
-  return (
-    <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
-      <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 16px 4px" }}>
-        <button onClick={() => { setNews([]); fetchNews(true); }} style={{ background: "none", border: "1px solid #e5e7eb", borderRadius: 6, padding: "2px 6px", cursor: "pointer", fontSize: 12 }}>🔄</button>
-      </div>
-      <div style={{ borderTop: "1px solid #f0f1f5" }}>
-        {loading ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px" }}>
-            <div style={S.spinner} />
-            <span style={{ fontSize: 13, color: "#6b7280", marginTop: 8 }}>AI가 최신 뉴스를 찾고 있어요...</span>
-          </div>
-        ) : error ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#6b7280" }}>
-            <span>{error}</span>
-            <button onClick={() => { setNews([]); fetchNews(true); }} style={{ background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>다시 시도</button>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {news.map((item, i) => (
-              <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" className="news-item" style={{ display: "flex", gap: 12, padding: "14px 20px", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textDecoration: "none", color: "inherit" }}>
-                <div style={{ width: 24, height: 24, borderRadius: 6, background: "linear-gradient(135deg, #6366f1, #818cf8)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0, marginTop: 2 }}>{item.rank || i + 1}</div>
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.title}</span>
-                  <span style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.summary}</span>
-                  <span style={{ fontSize: 11, color: "#9ca3af" }}>
-                    {item.source && <span>{item.source}</span>}
-                    {item.date && <span style={{ opacity: 0.6 }}> · {item.date}</span>}
-                  </span>
-                </div>
-              </a>
-            ))}
-            {news.length === 0 && !loading && (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#6b7280" }}>
-                <span>뉴스가 없습니다</span>
-                <button onClick={() => { setNews([]); fetchNews(true); }} style={{ background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>불러오기</button>
-              </div>
-            )}
+        {/* LLM header */}
+        {!activeInf && (
+          <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid #f0f1f5", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1a1a2e", margin: 0 }}>📰 LLM 서비스 뉴스</h3>
+            <button onClick={() => { setFeed(prev => { const n = { ...prev }; delete n[activeTab]; return n; }); fetchFeed(activeTab, true); }}
+              style={{ background: "none", border: "1px solid #e5e7eb", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontSize: 13 }}>🔄</button>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
 
-// ─── Side Panel (combines Influencer + LLM News) ───
-const SIDE_TABS = [
-  { id: "influencer", label: "🧑‍💻 AI 인플루언서" },
-  { id: "llm", label: "📰 LLM 뉴스" },
-];
+        {/* Refresh bar for influencer */}
+        {activeInf && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 18px 6px", flexShrink: 0 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#6b7280" }}>📝 최근 Threads 피드</span>
+            <button onClick={() => { setFeed(prev => { const n = { ...prev }; delete n[activeTab]; return n; }); fetchFeed(activeTab, true); }}
+              style={{ background: "none", border: "1px solid #e5e7eb", borderRadius: 6, padding: "2px 7px", cursor: "pointer", fontSize: 12 }}>🔄</button>
+          </div>
+        )}
 
-function SidePanel() {
-  const [tab, setTab] = useState("influencer");
-
-  return (
-    <div style={S.newsPanel}>
-      <div style={S.newsPanelHeader}>
-        <h3 style={S.newsPanelTitle}>{tab === "influencer" ? "🧑‍💻 AI 인플루언서" : "📰 LLM 뉴스"}</h3>
+        {/* Feed content */}
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {loading ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px" }}>
+              <div style={S.spinner} />
+              <span style={{ fontSize: 12, color: "#6b7280", marginTop: 8 }}>
+                {activeInf ? "Threads 피드를 가져오는 중..." : "최신 뉴스를 찾고 있어요..."}
+              </span>
+            </div>
+          ) : error ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#6b7280" }}>
+              <span>{error}</span>
+              <button onClick={() => fetchFeed(activeTab, true)}
+                style={{ background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>다시 시도</button>
+            </div>
+          ) : currentFeed.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {currentFeed.map((item, i) => (
+                <a key={i}
+                  href={item.url || (activeInf ? `https://www.threads.net/${activeInf.handle}` : "#")}
+                  target="_blank" rel="noopener noreferrer" className="news-item"
+                  style={{ display: "flex", gap: 10, padding: "12px 18px", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textDecoration: "none", color: "inherit" }}>
+                  <div style={{
+                    width: 22, height: 22, borderRadius: 6, flexShrink: 0, marginTop: 1,
+                    background: `linear-gradient(135deg, ${activeColor}, ${activeColor}88)`,
+                    color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700,
+                  }}>{i + 1}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.title}</div>
+                    {item.summary && <div style={{ fontSize: 11, color: "#6b7280", marginTop: 3, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.summary}</div>}
+                    <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 3 }}>
+                      {item.source && <span>{item.source}</span>}
+                      {item.date && <span>{item.source ? " · " : ""}{item.date}</span>}
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#9ca3af" }}>
+              <span>피드가 없습니다</span>
+              <button onClick={() => fetchFeed(activeTab, true)}
+                style={{ background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>불러오기</button>
+            </div>
+          )}
+        </div>
       </div>
-      <div style={S.newsTabs}>
-        {SIDE_TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            style={{ ...S.newsTab, ...(tab === t.id ? S.newsTabActive : {}) }}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-      {tab === "influencer" ? <InfluencerFeed /> : <LLMNewsFeed />}
     </div>
   );
 }
@@ -1192,6 +1136,8 @@ const CSS = `
   .ql-actions { position: absolute; top: 4px; right: 4px; display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
   .ql-actions .ql-btn { background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 11px; padding: 2px 5px; }
   div:hover > .ql-actions { opacity: 1; }
+  .file-holder-tab { outline: none; }
+  .file-holder-tab:hover { opacity: 0.85; }
 `;
 
 const S = {
@@ -1266,7 +1212,7 @@ const S = {
   linkBadge: { fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 10px", flexShrink: 0 },
   linkActions: { display: "flex", gap: 2, flexShrink: 0 },
   addLinkRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", margin: "4px 8px 8px", borderRadius: 12, border: "2px dashed", background: "transparent", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: 0.6, transition: "opacity 0.15s" },
-  newsPanel: { background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)", marginTop: -20, height: 600, display: "flex", flexDirection: "column" },
+  newsPanel: { background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)" },
   newsPanelHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px 12px" },
   newsPanelTitle: { fontSize: 16, fontWeight: 700 },
   newsRefresh: { background: "none", border: "1px solid #e5e7eb", borderRadius: 8, padding: "4px 8px", cursor: "pointer", fontSize: 14 },
