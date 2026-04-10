@@ -7,29 +7,34 @@ const SB_HEADERS = {
   Prefer: "return=representation",
 };
 
-const CACHE_TTL_MS = 60 * 60 * 1000;
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1시간
 
 const CATEGORY_QUERIES = {
-  "AI 기술": ["AI 딥러닝 모델 연구", "인공지능 논문 신기술"],
-  "LLM 서비스": ["ChatGPT Claude Gemini LLM", "GPT AI 서비스 업데이트"],
-  // ─── Threads 인플루언서 피드 (Google News에서 관련 활동/언급 검색) ───
-  "@choi.openai Threads 최신 포스트": [
-    "choi.openai 스레드 AI",
-    "choi.openai AI 인플루언서",
-    "스레드 AI 트렌드 한국 최신",
-    "Threads AI 한국 인플루언서 소식",
+  // ─── AI 최신 소식: 다양한 쿼리로 최신성 확보 ───
+  "AI 최신": [
+    "AI 인공지능 최신 소식",
+    "OpenAI Google AI 업데이트",
+    "AI 모델 출시 신기술",
+    "인공지능 서비스 새기능",
+    "AI 스타트업 투자 소식",
   ],
-  "@seize.the.future Threads 최신 포스트": [
-    "seize.the.future 스레드 AI",
-    "미래를잡다 AI 인사이트",
-    "스레드 AI 뉴스 한국 최신",
-    "Threads AI 트렌드 한국 소식",
+  // ─── LLM 서비스: ChatGPT, Claude, Gemini 등 ───
+  "LLM 서비스": [
+    "ChatGPT 업데이트 새기능",
+    "Claude Anthropic 소식",
+    "Gemini Google AI 업데이트",
+    "GPT LLM 서비스 변경",
+  ],
+  // ─── 하위 호환 (기존 탭 키) ───
+  "AI 기술": [
+    "AI 인공지능 최신 소식",
+    "AI 모델 출시 신기술",
   ],
 };
 
-async function fetchRSS(query) {
+async function fetchRSS(query, when = "1d") {
   const encoded = encodeURIComponent(query);
-  const url = `https://news.google.com/rss/search?q=${encoded}+when:3d&hl=ko&gl=KR&ceid=KR:ko`;
+  const url = `https://news.google.com/rss/search?q=${encoded}+when:${when}&hl=ko&gl=KR&ceid=KR:ko`;
 
   const res = await fetch(url, {
     headers: {
@@ -47,7 +52,7 @@ async function fetchRSS(query) {
   const items = [];
   const itemRegex = /<item>([\s\S]*?)<\/item>/g;
   let match;
-  while ((match = itemRegex.exec(text)) !== null && items.length < 8) {
+  while ((match = itemRegex.exec(text)) !== null && items.length < 10) {
     const xml = match[1];
     const title = extractTag(xml, "title");
     const link = extractLink(xml);
@@ -95,21 +100,39 @@ async function fetchGoogleNews(queries) {
   const all = [];
   const seen = new Set();
 
+  // 1차: 최근 1일 뉴스
   for (const q of queries) {
     try {
-      const items = await fetchRSS(q);
+      const items = await fetchRSS(q, "1d");
       for (const item of items) {
         if (!seen.has(item.title)) {
           seen.add(item.title);
           all.push({ ...item, rank: all.length + 1 });
         }
-        if (all.length >= 6) break;
+        if (all.length >= 8) break;
       }
     } catch {}
-    if (all.length >= 6) break;
+    if (all.length >= 8) break;
   }
 
-  return all.slice(0, 6);
+  // 2차: 1일 뉴스가 부족하면 3일로 확대
+  if (all.length < 4) {
+    for (const q of queries) {
+      try {
+        const items = await fetchRSS(q, "3d");
+        for (const item of items) {
+          if (!seen.has(item.title)) {
+            seen.add(item.title);
+            all.push({ ...item, rank: all.length + 1 });
+          }
+          if (all.length >= 8) break;
+        }
+      } catch {}
+      if (all.length >= 8) break;
+    }
+  }
+
+  return all.slice(0, 8);
 }
 
 async function getCache(id) {
@@ -140,7 +163,7 @@ export default async function handler(req, res) {
 
   try {
     const body = req.body || {};
-    const tab = body.tab || "AI 기술";
+    const tab = body.tab || "AI 최신";
     const force = body.force || false;
     const cacheId = "news_" + tab.replace(/\s/g, "_");
 
@@ -149,7 +172,7 @@ export default async function handler(req, res) {
       if (cached) return res.status(200).json({ news: cached, cached: true });
     }
 
-    const queries = CATEGORY_QUERIES[tab] || CATEGORY_QUERIES["AI 기술"];
+    const queries = CATEGORY_QUERIES[tab] || CATEGORY_QUERIES["AI 최신"];
     const news = await fetchGoogleNews(queries);
 
     if (news.length === 0) {
