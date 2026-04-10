@@ -46,100 +46,256 @@ const LABEL_COLORS = [
   { id: "gray", name: "회색", bg: "#f3f4f6", text: "#374151" },
 ];
 
-// ─── AI News Feed ───
-const NEWS_TABS = [
-  { id: "ai", label: "AI 기술" },
-  { id: "llm", label: "LLM 서비스" },
+// ─── AI Influencers (Threads) ───
+const INFLUENCERS = [
+  { id: "choi.openai", name: "CHOI", handle: "@choi.openai", desc: "AI 트렌드 · 23만+ 팔로워", color: "#6366f1" },
+  { id: "seize.the.future", name: "미래를잡다", handle: "@seize.the.future", desc: "AI 뉴스 · 인사이트", color: "#10b981" },
 ];
 
-function AINewsFeed() {
-  const [tab, setTab] = useState("ai");
-  const [news, setNews] = useState({});
+function InfluencerFeed() {
+  const [selectedId, setSelectedId] = useState(null);
+  const [feed, setFeed] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchNews = useCallback(async (tabId, force = false) => {
-    if (!force && news[tabId]?.length) return;
+  const fetchFeed = useCallback(async (influencerId, force = false) => {
+    if (!force && feed[influencerId]?.length) return;
     setLoading(true);
     setError(null);
     try {
-      const tabLabel = NEWS_TABS.find(t => t.id === tabId)?.label || "AI 기술";
+      const inf = INFLUENCERS.find(i => i.id === influencerId);
       const r = await fetch("/api/news", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tab: tabLabel, force }),
+        body: JSON.stringify({ tab: `Threads ${inf?.handle || influencerId} 최신 게시물`, force }),
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "API 오류");
       if (data.news?.length) {
-        setNews(prev => ({ ...prev, [tabId]: data.news }));
+        setFeed(prev => ({ ...prev, [influencerId]: data.news }));
+      } else {
+        throw new Error("피드를 찾을 수 없습니다");
+      }
+    } catch (e) {
+      setError(e.message || "피드를 불러올 수 없습니다");
+    }
+    setLoading(false);
+  }, [feed]);
+
+  const currentFeed = selectedId ? (feed[selectedId] || []) : [];
+
+  return (
+    <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
+      {/* Influencer cards */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "12px 16px" }}>
+        {INFLUENCERS.map(inf => (
+          <div
+            key={inf.id}
+            className="inf-card"
+            onClick={() => {
+              if (selectedId === inf.id) {
+                setSelectedId(null);
+              } else {
+                setSelectedId(inf.id);
+                fetchFeed(inf.id);
+              }
+            }}
+            style={{
+              display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+              borderRadius: 12, cursor: "pointer", transition: "all 0.15s",
+              background: selectedId === inf.id ? `${inf.color}0d` : "transparent",
+              border: selectedId === inf.id ? `1.5px solid ${inf.color}30` : "1.5px solid transparent",
+            }}
+          >
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+              background: `linear-gradient(135deg, ${inf.color}, ${inf.color}99)`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#fff", fontSize: 14, fontWeight: 700,
+            }}>
+              {inf.name[0]}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a2e" }}>{inf.name}</span>
+                <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 500 }}>{inf.handle}</span>
+              </div>
+              <div style={{ fontSize: 11, color: "#6b7280", marginTop: 1 }}>{inf.desc}</div>
+            </div>
+            <a
+              href={`https://www.threads.net/${inf.handle}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              style={{
+                fontSize: 11, fontWeight: 600, color: inf.color, textDecoration: "none",
+                padding: "4px 10px", borderRadius: 8, background: `${inf.color}10`,
+                transition: "background 0.15s", flexShrink: 0,
+              }}
+            >
+              Threads ↗
+            </a>
+          </div>
+        ))}
+      </div>
+
+      {/* Feed area */}
+      {selectedId && (
+        <div style={{ borderTop: "1px solid #f0f1f5" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px 6px" }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#1a1a2e" }}>
+              📝 {INFLUENCERS.find(i => i.id === selectedId)?.name} 최근 피드
+            </span>
+            <button
+              onClick={() => { setFeed(prev => { const n = { ...prev }; delete n[selectedId]; return n; }); fetchFeed(selectedId, true); }}
+              style={{ background: "none", border: "1px solid #e5e7eb", borderRadius: 6, padding: "2px 6px", cursor: "pointer", fontSize: 12 }}
+            >🔄</button>
+          </div>
+          <div style={{ padding: "0 16px 12px" }}>
+            {loading ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 0" }}>
+                <div style={S.spinner} />
+                <span style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>AI가 최신 피드를 가져오는 중...</span>
+              </div>
+            ) : error ? (
+              <div style={{ textAlign: "center", padding: "20px 0", fontSize: 12, color: "#6b7280" }}>
+                <span>{error}</span>
+                <button onClick={() => fetchFeed(selectedId, true)} style={{ display: "block", margin: "8px auto 0", background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>다시 시도</button>
+              </div>
+            ) : currentFeed.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {currentFeed.map((item, i) => (
+                  <a
+                    key={i}
+                    href={item.url || `https://www.threads.net/${INFLUENCERS.find(inf => inf.id === selectedId)?.handle}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="news-item"
+                    style={{ display: "flex", gap: 8, padding: "10px 12px", borderRadius: 10, cursor: "pointer", textDecoration: "none", color: "inherit", borderBottom: "1px solid #f5f5f5" }}
+                  >
+                    <div style={{
+                      width: 20, height: 20, borderRadius: 5, flexShrink: 0, marginTop: 1,
+                      background: `linear-gradient(135deg, ${INFLUENCERS.find(inf => inf.id === selectedId)?.color || "#6366f1"}, ${INFLUENCERS.find(inf => inf.id === selectedId)?.color || "#6366f1"}88)`,
+                      color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700,
+                    }}>{i + 1}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.title}</div>
+                      {item.summary && <div style={{ fontSize: 11, color: "#6b7280", marginTop: 3, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.summary}</div>}
+                      {item.date && <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 3 }}>{item.date}</div>}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "20px 0", fontSize: 12, color: "#9ca3af" }}>
+                피드를 불러오려면 새로고침 버튼을 눌러주세요
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── AI News Feed (LLM only) ───
+function LLMNewsFeed() {
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchNews = useCallback(async (force = false) => {
+    if (!force && news.length) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/news", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tab: "LLM 서비스", force }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || "API 오류");
+      if (data.news?.length) {
+        setNews(data.news);
       } else {
         throw new Error("뉴스를 찾을 수 없습니다");
       }
     } catch (e) {
-      console.error("News fetch error:", e);
       setError(e.message || "뉴스를 불러올 수 없습니다");
     }
     setLoading(false);
   }, [news]);
 
-  useEffect(() => { fetchNews(tab); }, [tab]);
-
-  const refreshTab = () => {
-    setNews(prev => { const n = { ...prev }; delete n[tab]; return n; });
-    fetchNews(tab, true);
-  };
-  const currentNews = news[tab] || [];
+  useEffect(() => { fetchNews(); }, []);
 
   return (
-    <div style={S.newsPanel}>
-      <div style={S.newsPanelHeader}>
-        <h3 style={S.newsPanelTitle}>🤖 AI 뉴스</h3>
-        <button onClick={refreshTab} style={S.newsRefresh} title="새로고침">🔄</button>
+    <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", padding: "8px 16px 4px" }}>
+        <button onClick={() => { setNews([]); fetchNews(true); }} style={{ background: "none", border: "1px solid #e5e7eb", borderRadius: 6, padding: "2px 6px", cursor: "pointer", fontSize: 12 }}>🔄</button>
       </div>
-      <div style={S.newsTabs}>
-        {NEWS_TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            style={{ ...S.newsTab, ...(tab === t.id ? S.newsTabActive : {}) }}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-      <div style={S.newsContent}>
+      <div style={{ borderTop: "1px solid #f0f1f5" }}>
         {loading ? (
-          <div style={S.newsLoading}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px" }}>
             <div style={S.spinner} />
             <span style={{ fontSize: 13, color: "#6b7280", marginTop: 8 }}>AI가 최신 뉴스를 찾고 있어요...</span>
           </div>
         ) : error ? (
-          <div style={S.newsError}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#6b7280" }}>
             <span>{error}</span>
-            <button onClick={refreshTab} style={{ ...S.newsTab, ...S.newsTabActive, marginTop: 8 }}>다시 시도</button>
+            <button onClick={() => { setNews([]); fetchNews(true); }} style={{ background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>다시 시도</button>
           </div>
         ) : (
-          <div style={S.newsList}>
-            {currentNews.map((item, i) => (
-              <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" className="news-item" style={S.newsItem}>
-                <div style={S.newsRank}>{item.rank || i + 1}</div>
-                <div style={S.newsItemContent}>
-                  <span style={S.newsItemTitle}>{item.title}</span>
-                  <span style={S.newsItemSummary}>{item.summary}</span>
-                  <span style={S.newsItemMeta}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {news.map((item, i) => (
+              <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" className="news-item" style={{ display: "flex", gap: 12, padding: "14px 20px", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textDecoration: "none", color: "inherit" }}>
+                <div style={{ width: 24, height: 24, borderRadius: 6, background: "linear-gradient(135deg, #6366f1, #818cf8)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0, marginTop: 2 }}>{item.rank || i + 1}</div>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.title}</span>
+                  <span style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.summary}</span>
+                  <span style={{ fontSize: 11, color: "#9ca3af" }}>
                     {item.source && <span>{item.source}</span>}
                     {item.date && <span style={{ opacity: 0.6 }}> · {item.date}</span>}
                   </span>
                 </div>
               </a>
             ))}
-            {currentNews.length === 0 && !loading && (
-              <div style={S.newsError}>
+            {news.length === 0 && !loading && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#6b7280" }}>
                 <span>뉴스가 없습니다</span>
-                <button onClick={refreshTab} style={{ ...S.newsTab, ...S.newsTabActive, marginTop: 8 }}>불러오기</button>
+                <button onClick={() => { setNews([]); fetchNews(true); }} style={{ background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>불러오기</button>
               </div>
             )}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Side Panel (combines Influencer + LLM News) ───
+const SIDE_TABS = [
+  { id: "influencer", label: "🧑‍💻 AI 인플루언서" },
+  { id: "llm", label: "📰 LLM 뉴스" },
+];
+
+function SidePanel() {
+  const [tab, setTab] = useState("influencer");
+
+  return (
+    <div style={S.newsPanel}>
+      <div style={S.newsPanelHeader}>
+        <h3 style={S.newsPanelTitle}>{tab === "influencer" ? "🧑‍💻 AI 인플루언서" : "📰 LLM 뉴스"}</h3>
+      </div>
+      <div style={S.newsTabs}>
+        {SIDE_TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            style={{ ...S.newsTab, ...(tab === t.id ? S.newsTabActive : {}) }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {tab === "influencer" ? <InfluencerFeed /> : <LLMNewsFeed />}
     </div>
   );
 }
@@ -380,10 +536,6 @@ function TodoBanner({ isAdmin }) {
 
   const { monday, friday } = getWeekRange(weekYear, weekNum);
   const month = monday.getMonth() + 1;
-  const firstDayOfMonth = new Date(monday.getFullYear(), monday.getMonth(), 1);
-  const firstMonday = new Date(firstDayOfMonth);
-  firstMonday.setDate(firstDayOfMonth.getDate() + ((8 - firstDayOfMonth.getDay()) % 7 || 7) - 7);
-  if (firstMonday < firstDayOfMonth) firstMonday.setDate(firstMonday.getDate() + 7);
   const monthWeek = Math.ceil((monday.getDate() + (new Date(monday.getFullYear(), monday.getMonth(), 1).getDay() || 7) - 1) / 7);
   const weekLabel = `${weekYear}년 ${month}월 ${monthWeek}주차 (${fmtMD(monday)} ~ ${fmtMD(friday)})`;
 
@@ -396,9 +548,7 @@ function TodoBanner({ isAdmin }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const doneCount = todos.filter(t => t.done).length;
   const totalCount = todos.length;
-  const pendingCount = totalCount - doneCount;
 
   const prevWeek = () => {
     if (weekNum <= 1) { setWeekYear(y => y - 1); setWeekNum(52); }
@@ -422,13 +572,6 @@ function TodoBanner({ isAdmin }) {
       await load();
     } catch (e) { alert("추가 실패: " + e.message); }
     setSaving(false);
-  };
-
-  const toggleTodo = async (id, done) => {
-    try {
-      await sbPatch("todos", id, { done: !done });
-      setTodos(prev => prev.map(t => t.id === id ? { ...t, done: !done } : t));
-    } catch {}
   };
 
   const deleteTodo = async (id) => {
@@ -469,13 +612,10 @@ function TodoBanner({ isAdmin }) {
       {showPopup && (
         <div style={S.overlay} onClick={() => setShowPopup(false)}>
           <div style={S.todoPopup} onClick={e => e.stopPropagation()}>
-            {/* Header */}
             <div style={S.taskPopupHeader}>
               <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>🔔 LAM TASK 외 주요 이슈</h3>
               <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
             </div>
-
-            {/* Week navigation */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "12px 24px", borderBottom: "1px solid #f0f1f5" }}>
               <button onClick={prevWeek} style={S.weekNavBtn}>◀</button>
               <span style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>{weekLabel}</span>
@@ -483,8 +623,6 @@ function TodoBanner({ isAdmin }) {
               <button onClick={goThisWeek} style={S.weekTodayBtn}>이번 주</button>
               <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: 4 }}>{totalCount}건</span>
             </div>
-
-            {/* Memo list */}
             <div style={{ flex: 1, overflowY: "auto", padding: "0 24px" }}>
               {todos.map((t, i) => (
                 <div key={t.id} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 0", borderBottom: "1px solid #f5f5f5" }}>
@@ -504,8 +642,6 @@ function TodoBanner({ isAdmin }) {
               ))}
               {todos.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af", fontSize: 14 }}>이번 주 등록된 이슈가 없습니다</div>}
             </div>
-
-            {/* Add (admin only) */}
             {isAdmin && (
               <div style={{ padding: "16px 24px", borderTop: "1px solid #f0f1f5", display: "flex", gap: 8 }}>
                 <input value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => e.key === "Enter" && addTodo()} placeholder="새 이슈 입력..." style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, fontFamily: "inherit" }} />
@@ -771,7 +907,6 @@ export default function TeamLinkHub() {
             </div>
           ) : (
             <>
-              {/* Category Tabs — pill buttons */}
               <div style={S.catTabBar}>
                 <div style={S.catTabList}>
                   {categories.map((cat, idx) => {
@@ -799,7 +934,6 @@ export default function TeamLinkHub() {
                 </div>
               </div>
 
-              {/* Active Category Content — fixed height */}
               <div style={S.catContentBox}>
                 {(() => {
                   const cat = categories.find(c => c.id === activeTab);
@@ -829,7 +963,6 @@ export default function TeamLinkHub() {
                 })()}
               </div>
 
-              {/* Quick Links — below categories */}
               <div style={{ ...S.quickLinks, marginTop: 16 }}>
                 {quicklinks.map(ql => ql.title ? (
                   <div key={ql.id} style={{ position: "relative" }}>
@@ -855,7 +988,7 @@ export default function TeamLinkHub() {
         </main>
 
         <aside style={S.sideCol}>
-          <AINewsFeed />
+          <SidePanel />
         </aside>
       </div>
 
@@ -1049,6 +1182,8 @@ const CSS = `
   .label-color-dot:hover { opacity: 0.8; }
   .news-item { text-decoration: none; color: inherit; transition: background 0.15s; }
   .news-item:hover { background: #f8f9fb !important; }
+  .inf-card { transition: background 0.15s; }
+  .inf-card:hover { background: #f8f9fb !important; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes linkFlash { 0% { background: #eef2ff; } 100% { background: transparent; } }
   .link-moved { animation: linkFlash 0.6s ease-out; }
@@ -1071,7 +1206,6 @@ const S = {
   searchInput: { border: "none", background: "transparent", fontSize: 14, flex: 1, outline: "none", fontFamily: "inherit", color: "#fff" },
   clearBtn: { background: "rgba(255,255,255,0.2)", border: "none", cursor: "pointer", color: "#fff", fontSize: 11, padding: "2px 6px", borderRadius: 4 },
 
-  // Task banner
   taskBanner: { display: "flex", alignItems: "center", gap: 12, marginTop: 12, padding: "10px 16px", background: "rgba(255,255,255,0.1)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", color: "#fff" },
   taskMarquee: { flex: 1, overflow: "hidden" },
   taskMarqueeInner: { display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap" },
@@ -1081,7 +1215,6 @@ const S = {
   taskPopupClose: { background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#9ca3af", padding: "4px 8px", borderRadius: 6 },
   taskIframe: { flex: 1, width: "100%", border: "none" },
 
-  // Calendar popup
   calPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
   calDateHeader: { fontSize: 14, fontWeight: 700, color: "#1e1b4b", padding: "8px 0 4px", borderBottom: "1px solid #f0f1f5", marginBottom: 4 },
   calEvent: { display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderBottom: "1px solid #f9fafb" },
@@ -1089,7 +1222,6 @@ const S = {
   todoPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.2)", overflow: "hidden" },
   weekNavBtn: { background: "none", border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 12, color: "#6b7280", fontFamily: "inherit" },
   weekTodayBtn: { background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#4338ca", fontFamily: "inherit" },
-  // Schedule card (replaces weather)
   scheduleCard: { background: "rgba(255,255,255,0.1)", backdropFilter: "blur(12px)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.12)", width: 300, overflow: "hidden" },
   scheduleHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.08)" },
   scheduleList: { padding: "4px 0", maxHeight: 220, overflowY: "auto" },
@@ -1109,13 +1241,11 @@ const S = {
   emptyState: { textAlign: "center", padding: 60, color: "#9ca3af" },
   listWrap: { background: "#fff", borderRadius: 14, padding: 8, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
 
-  // Quick links
   quickLinks: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 16 },
   quickLink: { display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "#fff", borderRadius: 12, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", cursor: "pointer" },
   quickLinkEmpty: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px 16px", background: "#fff", borderRadius: 12, border: "2px dashed #e5e7eb", cursor: "pointer", fontFamily: "inherit", width: "100%", transition: "border-color 0.15s" },
   qlActions: { position: "absolute", top: 4, right: 4, display: "flex", gap: 2 },
 
-  // Category tabs — pill buttons
   catTabBar: { marginBottom: 0, overflowX: "auto" },
   catTabList: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", padding: "16px 20px", background: "#fff", borderRadius: "16px 16px 0 0", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
   catPill: { display: "flex", alignItems: "center", gap: 4, padding: "7px 18px", background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#6b7280", transition: "all 0.15s", whiteSpace: "nowrap" },
@@ -1136,7 +1266,7 @@ const S = {
   linkBadge: { fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 10px", flexShrink: 0 },
   linkActions: { display: "flex", gap: 2, flexShrink: 0 },
   addLinkRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", margin: "4px 8px 8px", borderRadius: 12, border: "2px dashed", background: "transparent", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: 0.6, transition: "opacity 0.15s" },
-  newsPanel: { background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)", marginTop: -20 },
+  newsPanel: { background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)", marginTop: -20, height: 600, display: "flex", flexDirection: "column" },
   newsPanelHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px 12px" },
   newsPanelTitle: { fontSize: 16, fontWeight: 700 },
   newsRefresh: { background: "none", border: "1px solid #e5e7eb", borderRadius: 8, padding: "4px 8px", cursor: "pointer", fontSize: 14 },
