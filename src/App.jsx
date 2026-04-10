@@ -46,36 +46,24 @@ const LABEL_COLORS = [
   { id: "gray", name: "회색", bg: "#f3f4f6", text: "#374151" },
 ];
 
-// ─── AI Influencers (Threads) ───
-const INFLUENCERS = [
-  { id: "choi.openai", name: "CHOI", handle: "@choi.openai", desc: "AI 트렌드 · 23만+ 팔로워", color: "#6366f1" },
-  { id: "seize.the.future", name: "미래를잡다", handle: "@seize.the.future", desc: "AI 뉴스 · 인사이트", color: "#10b981" },
+// ─── Side Panel with file-holder tabs ───
+const NEWS_TABS = [
+  { id: "ai", label: "🤖 AI 최신", color: "#6366f1" },
+  { id: "llm", label: "💬 LLM 서비스", color: "#0ea5e9" },
 ];
 
-// ─── Side Panel with file-holder tabs ───
 function SidePanel() {
-  const [activeTab, setActiveTab] = useState(INFLUENCERS[0].id);
+  const [activeTab, setActiveTab] = useState("ai");
   const [feed, setFeed] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  const ALL_TABS = [
-    ...INFLUENCERS.map(inf => ({ id: inf.id, label: inf.handle, color: inf.color, type: "influencer", name: inf.name, desc: inf.desc })),
-    { id: "llm", label: "LLM 뉴스", color: "#6b7280", type: "news", name: "LLM 서비스", desc: "" },
-  ];
 
   const fetchFeed = useCallback(async (tabId, force = false) => {
     if (!force && feed[tabId]?.length) return;
     setLoading(true);
     setError(null);
     try {
-      let tabLabel;
-      const inf = INFLUENCERS.find(i => i.id === tabId);
-      if (inf) {
-        tabLabel = `${inf.handle} Threads 최신 포스트`;
-      } else {
-        tabLabel = "LLM 서비스";
-      }
+      const tabLabel = tabId === "ai" ? "AI 최신" : "LLM 서비스";
       const r = await fetch("/api/news", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,26 +74,35 @@ function SidePanel() {
       if (data.news?.length) {
         setFeed(prev => ({ ...prev, [tabId]: data.news }));
       } else {
-        throw new Error("피드를 찾을 수 없습니다");
+        throw new Error("뉴스를 찾을 수 없습니다");
       }
     } catch (e) {
-      setError(e.message || "피드를 불러올 수 없습니다");
+      setError(e.message || "뉴스를 불러올 수 없습니다");
     }
     setLoading(false);
   }, [feed]);
 
   useEffect(() => { fetchFeed(activeTab); }, [activeTab]);
 
+  // Auto-refresh every hour
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFeed({});
+      fetchFeed(activeTab, true);
+    }, 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [activeTab]);
+
   const currentFeed = feed[activeTab] || [];
-  const activeTabData = ALL_TABS.find(t => t.id === activeTab);
+  const activeTabData = NEWS_TABS.find(t => t.id === activeTab);
   const activeColor = activeTabData?.color || "#6366f1";
-  const activeInf = INFLUENCERS.find(i => i.id === activeTab);
+  const tabTitle = activeTab === "ai" ? "🤖 AI 최신 소식" : "💬 LLM 서비스 뉴스";
 
   return (
     <div style={{ marginTop: -20 }}>
       {/* File-holder tabs at top */}
       <div style={{ display: "flex", alignItems: "flex-end", gap: 3, paddingLeft: 8 }}>
-        {ALL_TABS.map((tab) => {
+        {NEWS_TABS.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
             <button
@@ -113,29 +110,22 @@ function SidePanel() {
               onClick={() => setActiveTab(tab.id)}
               className="file-holder-tab"
               style={{
-                padding: isActive ? "8px 14px 10px" : "6px 12px 8px",
+                padding: isActive ? "8px 16px 10px" : "6px 14px 8px",
                 background: "#fff",
-                border: `2px solid ${tab.color}`,
-                borderBottom: isActive ? "2px solid #fff" : `2px solid ${tab.color}`,
+                border: `1px solid ${tab.color}40`,
+                borderBottom: isActive ? "1px solid #fff" : `1px solid ${tab.color}40`,
                 borderRadius: "10px 10px 0 0",
                 cursor: "pointer", fontFamily: "inherit",
-                fontSize: isActive ? 11 : 10, fontWeight: 700,
+                fontSize: isActive ? 12 : 11, fontWeight: 700,
                 color: tab.color,
                 transition: "all 0.2s",
                 position: "relative",
                 zIndex: isActive ? 3 : 1,
-                marginBottom: -2,
-                minWidth: 0,
-                opacity: isActive ? 1 : 0.6,
+                marginBottom: -1,
+                opacity: isActive ? 1 : 0.55,
               }}
             >
-              <span style={{
-                display: "inline-block",
-                maxWidth: 90,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}>{tab.label}</span>
+              {tab.label}
             </button>
           );
         })}
@@ -144,60 +134,24 @@ function SidePanel() {
       {/* Panel body */}
       <div style={{
         background: "#fff", borderRadius: "0 12px 16px 16px",
-        border: `2px solid ${activeColor}`, borderTop: `2px solid ${activeColor}`,
+        border: `1px solid ${activeColor}30`, borderTop: `1px solid ${activeColor}30`,
         height: 580, display: "flex", flexDirection: "column",
         boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
         overflow: "hidden",
       }}>
-        {/* Profile header for influencer tabs */}
-        {activeInf && (
-          <div style={{
-            padding: "14px 18px 12px", borderBottom: "1px solid #f0f1f5",
-            display: "flex", alignItems: "center", gap: 10, flexShrink: 0,
-          }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-              background: `linear-gradient(135deg, ${activeColor}, ${activeColor}88)`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#fff", fontSize: 14, fontWeight: 700,
-            }}>{activeInf.name[0]}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a2e" }}>{activeInf.name}</div>
-              <div style={{ fontSize: 11, color: "#9ca3af" }}>{activeInf.desc}</div>
-            </div>
-            <a href={`https://www.threads.net/${activeInf.handle}`} target="_blank" rel="noopener noreferrer"
-              style={{ fontSize: 11, fontWeight: 600, color: activeColor, textDecoration: "none", padding: "4px 10px", borderRadius: 8, background: `${activeColor}10`, flexShrink: 0 }}>
-              Threads ↗
-            </a>
-          </div>
-        )}
-
-        {/* LLM header */}
-        {!activeInf && (
-          <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid #f0f1f5", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1a1a2e", margin: 0 }}>📰 LLM 서비스 뉴스</h3>
-            <button onClick={() => { setFeed(prev => { const n = { ...prev }; delete n[activeTab]; return n; }); fetchFeed(activeTab, true); }}
-              style={{ background: "none", border: "1px solid #e5e7eb", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontSize: 13 }}>🔄</button>
-          </div>
-        )}
-
-        {/* Refresh bar for influencer */}
-        {activeInf && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 18px 6px", flexShrink: 0 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#6b7280" }}>📝 최근 Threads 피드</span>
-            <button onClick={() => { setFeed(prev => { const n = { ...prev }; delete n[activeTab]; return n; }); fetchFeed(activeTab, true); }}
-              style={{ background: "none", border: "1px solid #e5e7eb", borderRadius: 6, padding: "2px 7px", cursor: "pointer", fontSize: 12 }}>🔄</button>
-          </div>
-        )}
+        {/* Header */}
+        <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid #f0f1f5", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1a1a2e", margin: 0 }}>{tabTitle}</h3>
+          <button onClick={() => { setFeed(prev => { const n = { ...prev }; delete n[activeTab]; return n; }); fetchFeed(activeTab, true); }}
+            style={{ background: "none", border: "1px solid #e5e7eb", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontSize: 13 }}>🔄</button>
+        </div>
 
         {/* Feed content */}
         <div style={{ flex: 1, overflowY: "auto" }}>
           {loading ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px" }}>
               <div style={S.spinner} />
-              <span style={{ fontSize: 12, color: "#6b7280", marginTop: 8 }}>
-                {activeInf ? "Threads 피드를 가져오는 중..." : "최신 뉴스를 찾고 있어요..."}
-              </span>
+              <span style={{ fontSize: 12, color: "#6b7280", marginTop: 8 }}>최신 뉴스를 찾고 있어요...</span>
             </div>
           ) : error ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#6b7280" }}>
@@ -208,9 +162,7 @@ function SidePanel() {
           ) : currentFeed.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column" }}>
               {currentFeed.map((item, i) => (
-                <a key={i}
-                  href={item.url || (activeInf ? `https://www.threads.net/${activeInf.handle}` : "#")}
-                  target="_blank" rel="noopener noreferrer" className="news-item"
+                <a key={i} href={item.url || "#"} target="_blank" rel="noopener noreferrer" className="news-item"
                   style={{ display: "flex", gap: 10, padding: "12px 18px", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textDecoration: "none", color: "inherit" }}>
                   <div style={{
                     width: 22, height: 22, borderRadius: 6, flexShrink: 0, marginTop: 1,
@@ -230,7 +182,7 @@ function SidePanel() {
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#9ca3af" }}>
-              <span>피드가 없습니다</span>
+              <span>뉴스가 없습니다</span>
               <button onClick={() => fetchFeed(activeTab, true)}
                 style={{ background: "#1e1b4b", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>불러오기</button>
             </div>
