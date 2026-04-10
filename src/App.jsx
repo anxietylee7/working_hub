@@ -53,7 +53,7 @@ const REMOTE_BUTTONS = [
   { id: "salary", emoji: "💰", label: "급여 조회", url: "https://www.ipayview.com/Index.asp?com_code=Q776&emp_no=H33777", color: "#f59e0b" },
   { id: "leave", emoji: "🏖️", label: "휴가 신청", url: "https://hr.smilegate.net/tlm/vacation-submit/submit", color: "#0ea5e9" },
   { id: "overtime", emoji: "🕐", label: "계획외 근무", url: "https://hr.smilegate.net/tlm/work-submit/submit/unplanned-work", color: "#ec4899" },
-  { id: "welfare", emoji: "🎁", label: "복지몰", url: "https://sgcampus.ezwel.com/pc/product/main/welfare-mall", color: "#8b5cf6" },
+  { id: "welfare", emoji: "🎁", label: "복지몰", url: "https://clg.smilegate.net/userview/WELFARE_ME_POINT", color: "#8b5cf6" },
 ];
 
 function FloatingRemote() {
@@ -61,14 +61,14 @@ function FloatingRemote() {
 
   return (
     <div style={{
-      position: "fixed", left: 16, top: "50%", transform: "translateY(-50%)",
-      display: "flex", flexDirection: "column", gap: 6, zIndex: 50,
+      display: "flex", flexDirection: "column", gap: 6,
+      position: "sticky", top: 24,
     }}>
       <div style={{
-        background: "rgba(255, 255, 255, 0.85)", backdropFilter: "blur(12px)",
+        background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(12px)",
         borderRadius: 16, padding: "12px 8px",
         display: "flex", flexDirection: "column", gap: 4, alignItems: "center",
-        boxShadow: "0 4px 24px rgba(74,144,217,0.12)", border: "1px solid rgba(74,144,217,0.15)",
+        boxShadow: "0 4px 24px rgba(74,144,217,0.1)", border: "1px solid rgba(74,144,217,0.12)",
       }}>
         <div style={{ fontSize: 9, fontWeight: 700, color: "#4a90d9", letterSpacing: "0.08em", marginBottom: 4, textTransform: "uppercase" }}>바로가기</div>
         {REMOTE_BUTTONS.map(btn => (
@@ -814,7 +814,6 @@ export default function TeamLinkHub() {
   return (
     <div style={S.root}>
       <style>{CSS}</style>
-      <FloatingRemote />
 
       <header style={S.hero}>
         <div style={S.heroInner}>
@@ -841,6 +840,9 @@ export default function TeamLinkHub() {
       </header>
 
       <div style={S.twoCol}>
+        <aside style={{ position: "sticky", top: 24 }}>
+          <FloatingRemote />
+        </aside>
         <main style={S.mainCol}>
           <div style={S.statsStrip}>
             <div style={S.statItem}><span style={S.statNum}>{categories.length}</span><span style={S.statLabel}>카테고리</span></div>
@@ -1162,17 +1164,17 @@ const CSS = `
 
 const S = {
   root: { fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif", background: "#f0f7ff", minHeight: "100vh", color: "#1a2a3a" },
-  hero: { background: "linear-gradient(135deg, #4a90d9 0%, #6db3f2 50%, #89c4f4 100%)", padding: "36px 32px 40px", color: "#fff" },
-  heroInner: { maxWidth: 1160, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "end" },
+  hero: { background: "linear-gradient(135deg, #4a90d9 0%, #6db3f2 50%, #89c4f4 100%)", padding: "36px 32px 40px", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.1)" },
+  heroInner: { maxWidth: 1240, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "end" },
   heroLeft: { display: "flex", flexDirection: "column" }, heroRight: { width: 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10 },
-  heroDate: { fontSize: 13, opacity: 0.7, marginBottom: 6, fontWeight: 500 },
-  heroTitle: { fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 4 },
-  heroSub: { fontSize: 14, opacity: 0.8, fontWeight: 400 },
-  searchBox: { display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(8px)", borderRadius: 12, padding: "10px 16px", minWidth: 240, border: "1px solid rgba(255,255,255,0.25)" },
+  heroDate: { fontSize: 13, opacity: 1, marginBottom: 6, fontWeight: 500, color: "rgba(255,255,255,0.9)" },
+  heroTitle: { fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 4, color: "#fff" },
+  heroSub: { fontSize: 14, opacity: 1, fontWeight: 400, color: "rgba(255,255,255,0.85)" },
+  searchBox: { display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.3)", backdropFilter: "blur(8px)", borderRadius: 12, padding: "10px 16px", minWidth: 240, border: "1px solid rgba(255,255,255,0.4)" },
   searchInput: { border: "none", background: "transparent", fontSize: 14, flex: 1, outline: "none", fontFamily: "inherit", color: "#fff" },
   clearBtn: { background: "rgba(255,255,255,0.25)", border: "none", cursor: "pointer", color: "#fff", fontSize: 11, padding: "2px 6px", borderRadius: 4 },
 
-  taskBanner: { display: "flex", alignItems: "center", gap: 12, marginTop: 12, padding: "10px 16px", background: "rgba(255,255,255,0.15)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.2)", color: "#fff" },
+  taskBanner: { display: "flex", alignItems: "center", gap: 12, marginTop: 12, padding: "10px 16px", background: "rgba(255,255,255,0.28)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.35)", color: "#fff" },
   taskMarquee: { flex: 1, overflow: "hidden" },
   taskMarqueeInner: { display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap" },
   taskDivider: { opacity: 0.3 },
@@ -1188,12 +1190,12 @@ const S = {
   todoPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.15)", overflow: "hidden" },
   weekNavBtn: { background: "none", border: "1px solid #d4e4f7", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 12, color: "#6b7280", fontFamily: "inherit" },
   weekTodayBtn: { background: "#e8f4fd", border: "1px solid #a8d4f2", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#2d6cb4", fontFamily: "inherit" },
-  scheduleCard: { background: "rgba(255,255,255,0.15)", backdropFilter: "blur(12px)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.2)", width: 300, overflow: "hidden" },
+  scheduleCard: { background: "rgba(255,255,255,0.25)", backdropFilter: "blur(12px)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.35)", width: 300, overflow: "hidden" },
   scheduleHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.12)" },
   scheduleList: { padding: "4px 0", maxHeight: 220, overflowY: "auto" },
   scheduleItem: { display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 18px" },
-  scheduleTime: { fontSize: 12, fontWeight: 700, color: "#b8dcf8", minWidth: 36, flexShrink: 0, marginTop: 1 },
-  twoCol: { maxWidth: 1160, margin: "0 auto", padding: "0 32px 64px", display: "grid", gridTemplateColumns: "1fr 320px", gap: 24, alignItems: "start" },
+  scheduleTime: { fontSize: 12, fontWeight: 700, color: "#fff", minWidth: 36, flexShrink: 0, marginTop: 1 },
+  twoCol: { maxWidth: 1240, margin: "0 auto", padding: "0 32px 64px", display: "grid", gridTemplateColumns: "60px 1fr 320px", gap: 20, alignItems: "start" },
   mainCol: { minWidth: 0 },
   sideCol: { position: "sticky", top: 24 },
   statsStrip: { display: "flex", alignItems: "center", gap: 20, padding: "18px 24px", margin: "-20px 0 24px", background: "#fff", borderRadius: 14, boxShadow: "0 4px 20px rgba(74,144,217,0.08)", position: "relative", zIndex: 2 },
