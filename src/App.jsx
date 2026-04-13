@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { motion } from "framer-motion";
 
 // ─── Supabase config ───
 const SUPABASE_URL = "https://pyfzeyxcwzecjzeuhehn.supabase.co";
@@ -892,22 +891,20 @@ export default function TeamLinkHub() {
 
       {/* Animated geometric background */}
       <div style={{ position: "fixed", inset: 0, zIndex: 0, background: "#030303", overflow: "hidden" }}>
-        {/* Subtle radial gradient overlay */}
         <div style={{ position: "absolute", inset: 0, background: timeTheme.bgGrad }} />
-        {/* Floating shapes */}
         {timeTheme.shapes.map((s, i) => (
-          <motion.div
+          <div
             key={i}
-            initial={{ opacity: 0, y: -120, rotate: s.rot - 15 }}
-            animate={{ opacity: 1, y: 0, rotate: s.rot }}
-            transition={{ duration: 2.4, delay: 0.3 + i * 0.15, ease: [0.23, 0.86, 0.39, 0.96], opacity: { duration: 1.2 } }}
-            style={{ position: "absolute", left: s.x, top: s.y }}
+            className="elegant-shape"
+            style={{
+              position: "absolute", left: s.x, top: s.y,
+              animationDelay: `${0.3 + i * 0.15}s`,
+              "--rot": `${s.rot}deg`,
+              "--rot-from": `${s.rot - 15}deg`,
+              "--float-dur": `${12 + i * 2}s`,
+            }}
           >
-            <motion.div
-              animate={{ y: [0, 15, 0] }}
-              transition={{ duration: 12 + i * 2, repeat: Infinity, ease: "easeInOut" }}
-              style={{ width: s.w, height: s.h, position: "relative" }}
-            >
+            <div className="elegant-float" style={{ width: s.w, height: s.h, position: "relative" }}>
               <div style={{
                 position: "absolute", inset: 0, borderRadius: 9999,
                 background: `linear-gradient(to right, ${s.color}, transparent)`,
@@ -920,20 +917,14 @@ export default function TeamLinkHub() {
                   background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.15), transparent 70%)",
                 }} />
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         ))}
-        {/* Top/bottom fade */}
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(3,3,3,0.7) 0%, transparent 30%, transparent 70%, rgba(3,3,3,0.8) 100%)", pointerEvents: "none" }} />
       </div>
 
       {/* TOP: Full-width header */}
-      <motion.header
-        style={S.topHeader}
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-      >
+      <header className="fade-in-down" style={S.topHeader}>
         <div style={S.topHeaderInner}>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={S.heroBadge}>
@@ -952,17 +943,12 @@ export default function TeamLinkHub() {
             {now.getFullYear()}.{String(now.getMonth()+1).padStart(2,"0")}.{String(now.getDate()).padStart(2,"0")} ({weekday}) {String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}
           </p>
         </div>
-      </motion.header>
+      </header>
 
       {/* BELOW: Sidebar + Content */}
       <div style={S.pageGrid}>
         {/* LEFT SIDEBAR */}
-        <motion.aside
-          style={S.sidebar}
-          initial={{ opacity: 0, x: -16 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
+        <aside className="fade-in-left" style={S.sidebar}>
           {/* Schedule */}
           <div className="glass-card" style={S.glassCard}>
             <div style={S.glassCardLabel}>📅 오늘 일정</div>
@@ -1000,7 +986,7 @@ export default function TeamLinkHub() {
               ))}
             </div>
           </div>
-        </motion.aside>
+        </aside>
 
         {/* RIGHT CONTENT */}
         <div style={S.contentArea}>
@@ -1302,6 +1288,30 @@ function LinkCard({ link, color, badge, isAdmin, isMoved, onEdit, onDelete, onMo
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* Elegant floating shapes */
+  .elegant-shape {
+    opacity: 0;
+    transform: translateY(-120px) rotate(var(--rot-from, 0deg));
+    animation: shapeEnter 2.4s cubic-bezier(0.23, 0.86, 0.39, 0.96) forwards;
+    animation-delay: var(--delay, 0.3s);
+  }
+  @keyframes shapeEnter {
+    0% { opacity: 0; transform: translateY(-120px) rotate(var(--rot-from, 0deg)); }
+    50% { opacity: 1; }
+    100% { opacity: 1; transform: translateY(0) rotate(var(--rot, 0deg)); }
+  }
+  .elegant-float {
+    animation: shapeFloat var(--float-dur, 12s) ease-in-out infinite;
+  }
+  @keyframes shapeFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(15px); }
+  }
+  .fade-in-down { animation: fadeInDown 0.6s ease-out 0.2s both; }
+  @keyframes fadeInDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in-left { animation: fadeInLeft 0.5s ease-out 0.4s both; }
+  @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
 
   /* Animated mesh gradient */
   .hero-gradient {
