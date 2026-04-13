@@ -839,6 +839,29 @@ export default function TeamLinkHub() {
   const weekday = ["일","월","화","수","목","금","토"][now.getDay()];
   const greeting = now.getHours() < 12 ? "좋은 아침이에요" : now.getHours() < 18 ? "좋은 오후예요" : "좋은 저녁이에요";
 
+  // 시간대별 컬러 테마
+  const hour = now.getHours();
+  const timeTheme = hour < 12
+    ? { // 아침: 따뜻한 앰버/골드
+        mesh1: ["#030303", "#f59e0b", "#d97706", "#451a03", "#030303"],
+        mesh2: ["#030303", "#ffffff", "#f59e0b", "#fb923c"],
+        textGrad: "linear-gradient(to right, #fcd34d, rgba(255,255,255,0.9), #fdba74)",
+        accent: "#f59e0b",
+      }
+    : hour < 18
+    ? { // 오후: 그린/라임 + 로즈/퍼플핑크
+        mesh1: ["#030303", "#10b981", "#e11d48", "#84cc16", "#a855f7"],
+        mesh2: ["#030303", "#ffffff", "#34d399", "#f472b6"],
+        textGrad: "linear-gradient(to right, #86efac, rgba(255,255,255,0.9), #f9a8d4)",
+        accent: "#10b981",
+      }
+    : { // 저녁: 딥 퍼플/시안
+        mesh1: ["#030303", "#7c3aed", "#0891b2", "#1e1b4b", "#030303"],
+        mesh2: ["#030303", "#ffffff", "#7c3aed", "#06b6d4"],
+        textGrad: "linear-gradient(to right, #c4b5fd, rgba(255,255,255,0.9), #67e8f9)",
+        accent: "#7c3aed",
+      };
+
   if (!loaded) return (
     <div style={{ ...S.root, display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
       <style>{CSS}</style>
@@ -853,13 +876,13 @@ export default function TeamLinkHub() {
       {/* Full-page WebGL Mesh Gradient Background */}
       <MeshGradient
         style={{ position: "fixed", inset: 0, width: "100%", height: "100%", zIndex: 0 }}
-        colors={["#030303", "#6366f1", "#e11d48", "#1e1b4b", "#030303"]}
+        colors={timeTheme.mesh1}
         speed={0.25}
         backgroundColor="#030303"
       />
       <MeshGradient
         style={{ position: "fixed", inset: 0, width: "100%", height: "100%", zIndex: 0, opacity: 0.35 }}
-        colors={["#030303", "#ffffff", "#6366f1", "#e11d48"]}
+        colors={timeTheme.mesh2}
         speed={0.15}
         wireframe={true}
         backgroundColor="transparent"
@@ -880,7 +903,7 @@ export default function TeamLinkHub() {
             <h1 style={S.heroTitle}>
               <span style={{
                 fontWeight: 800, fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-0.03em",
-                background: "linear-gradient(to right, #a5b4fc, rgba(255,255,255,0.9), #fda4af)",
+                background: timeTheme.textGrad,
                 backgroundSize: "200% 200%",
                 WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
               }}>{greeting}</span>
