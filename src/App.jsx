@@ -441,10 +441,10 @@ function TaskBanner() {
       </div>
 
       {showPopup && (
-        <div style={S.overlay} onClick={() => setShowPopup(false)}>
-          <div style={S.taskPopup} onClick={e => e.stopPropagation()}>
+        <div style={S.slideOverlay} onClick={() => setShowPopup(false)}>
+          <div style={S.slidePanel} onClick={e => e.stopPropagation()}>
             <div style={S.taskPopupHeader}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>📋 LAM TASK 현황</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#fff" }}>📋 LAM TASK 현황</h3>
               <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
             </div>
             <iframe
@@ -573,13 +573,13 @@ function TodoBanner({ isAdmin }) {
       </div>
 
       {showPopup && (
-        <div style={S.overlay} onClick={() => setShowPopup(false)}>
-          <div style={S.todoPopup} onClick={e => e.stopPropagation()}>
+        <div style={S.slideOverlay} onClick={() => setShowPopup(false)}>
+          <div style={S.slidePanel} onClick={e => e.stopPropagation()}>
             <div style={S.taskPopupHeader}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>🔔 LAM TASK 외 주요 이슈</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#fff" }}>🔔 LAM TASK 외 주요 이슈</h3>
               <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "12px 24px", borderBottom: "1px solid #f0f1f5" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "12px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <button onClick={prevWeek} style={S.weekNavBtn}>◀</button>
               <span style={{ fontSize: 14, fontWeight: 600, color: "#e2e8f0" }}>{weekLabel}</span>
               <button onClick={nextWeek} style={S.weekNavBtn}>▶</button>
@@ -804,7 +804,7 @@ export default function TeamLinkHub() {
   };
 
   const weekday = ["일","월","화","수","목","금","토"][now.getDay()];
-  const greeting = now.getHours() < 12 ? "좋은 아침이에요" : now.getHours() < 18 ? "좋은 오후에요" : "좋은 저녁이에요";
+  const greeting = now.getHours() < 12 ? "좋은 아침이에요" : now.getHours() < 18 ? "좋은 오후예요" : "좋은 저녁이에요";
 
   if (!loaded) return (
     <div style={{ ...S.root, display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
@@ -840,7 +840,7 @@ export default function TeamLinkHub() {
         transition={{ duration: 0.6, delay: 0.2 }}
       >
         <div style={S.topHeaderInner}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={S.heroBadge}>
               <span style={{ fontSize: 12 }}>✦</span> 선행AI팀 워크스페이스
             </div>
@@ -927,7 +927,7 @@ export default function TeamLinkHub() {
           </div>
 
           {/* Categories + News side by side */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 16, alignItems: "start" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 16, alignItems: "start", marginTop: 16 }}>
             {/* Left: Categories */}
             <main style={S.mainCol}>
               {filtered !== null ? (
@@ -1273,6 +1273,7 @@ const CSS = `
   .news-item:hover { background: rgba(255,255,255,0.04) !important; }
 
   @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
   @keyframes linkFlash { 0% { background: rgba(6,182,212,0.1); } 100% { background: transparent; } }
   .link-moved { animation: linkFlash 0.5s ease-out; }
 
@@ -1329,7 +1330,7 @@ const S = {
   // Schedule card (inside glass card)
   scheduleCard: { background: "transparent", borderRadius: 0, border: "none", overflow: "hidden" },
   scheduleHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: 0, cursor: "pointer" },
-  scheduleList: { padding: "4px 0", maxHeight: 120, overflowY: "auto" },
+  scheduleList: { padding: "4px 0", maxHeight: 220, overflowY: "auto" },
   scheduleItem: { display: "flex", alignItems: "flex-start", gap: 8, padding: "4px 0" },
   scheduleTime: { fontSize: 11, fontWeight: 600, color: "#06b6d4", minWidth: 32, flexShrink: 0, marginTop: 1 },
 
@@ -1401,6 +1402,8 @@ const S = {
 
   // Modals
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(8px)" },
+  slideOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, backdropFilter: "blur(4px)" },
+  slidePanel: { position: "fixed", top: 0, right: 0, width: 520, height: "100vh", background: "#111118", borderLeft: "1px solid rgba(255,255,255,0.08)", boxShadow: "-16px 0 48px rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", overflow: "hidden", zIndex: 101, animation: "slideIn 0.25s ease-out" },
   modal: { background: "#111118", borderRadius: 16, padding: "24px 28px", width: "90%", maxWidth: 440, boxShadow: "0 24px 80px rgba(0,0,0,0.5)", maxHeight: "85vh", overflowY: "auto", border: "1px solid rgba(255,255,255,0.08)" },
   modalTitle: { fontSize: 16, fontWeight: 600, marginBottom: 20, color: "#fff" },
   form: { display: "flex", flexDirection: "column", gap: 12 },
