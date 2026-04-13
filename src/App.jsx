@@ -841,23 +841,24 @@ export default function TeamLinkHub() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          {/* Badge */}
-          <div style={S.heroBadge}>
+          {/* Badge - full width */}
+          <div style={{ ...S.heroBadge, alignSelf: "flex-start" }}>
             <span style={{ fontSize: 12 }}>✦</span> 선행AI팀 워크스페이스
           </div>
 
-          {/* Title */}
-          <h1 style={S.heroTitle}>
+          {/* Title - full width large */}
+          <h1 style={{ ...S.heroTitle, width: "100%" }}>
             <span style={{
-              display: "block", fontWeight: 300, fontSize: 24,
+              display: "block", fontWeight: 300, fontSize: 32,
               background: "linear-gradient(135deg, #fff 0%, #06b6d4 40%, #f97316 70%, #fff 100%)",
               backgroundSize: "200% 200%",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             }}>{greeting}</span>
-            <span style={{ display: "block", fontWeight: 800, fontSize: 36, color: "#fff" }}>Workspace</span>
+            <span style={{ display: "block", fontWeight: 800, fontSize: 48, color: "#fff", letterSpacing: "-0.03em" }}>Workspace</span>
           </h1>
 
-          <p style={S.heroDate}>
+          {/* Date - full width */}
+          <p style={{ ...S.heroDate, width: "100%" }}>
             {now.getFullYear()}.{String(now.getMonth()+1).padStart(2,"0")}.{String(now.getDate()).padStart(2,"0")} ({weekday}) {String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}
           </p>
 
@@ -1282,7 +1283,7 @@ const S = {
   root: { fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", background: "transparent", minHeight: "100vh", color: "#e2e8f0", position: "relative" },
 
   // Hero - dark shader style
-  pageGrid: { display: "grid", gridTemplateColumns: "300px 1fr", minHeight: "100vh", position: "relative", zIndex: 1 },
+  pageGrid: { display: "grid", gridTemplateColumns: "500px 1fr", minHeight: "100vh", position: "relative", zIndex: 1 },
   sidebar: { position: "sticky", top: 0, height: "100vh", overflowY: "auto", padding: "28px 24px", display: "flex", flexDirection: "column", gap: 12, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(16px)", borderRight: "1px solid rgba(255,255,255,0.06)" },
   contentArea: { padding: "24px 28px 64px", minWidth: 0 },
   heroBadge: { display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 24, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.8)", letterSpacing: "0.02em" },
