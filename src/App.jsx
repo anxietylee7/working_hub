@@ -441,8 +441,8 @@ function TaskBanner() {
       </div>
 
       {showPopup && (
-        <div style={S.slideOverlay} onClick={() => setShowPopup(false)}>
-          <div style={S.slidePanel} onClick={e => e.stopPropagation()}>
+        <div style={S.sidePopupOverlay} onClick={() => setShowPopup(false)}>
+          <div style={S.sidePopup} onClick={e => e.stopPropagation()}>
             <div style={S.taskPopupHeader}>
               <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#fff" }}>📋 LAM TASK 현황</h3>
               <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
@@ -573,8 +573,8 @@ function TodoBanner({ isAdmin }) {
       </div>
 
       {showPopup && (
-        <div style={S.slideOverlay} onClick={() => setShowPopup(false)}>
-          <div style={S.slidePanel} onClick={e => e.stopPropagation()}>
+        <div style={S.sidePopupOverlay} onClick={() => setShowPopup(false)}>
+          <div style={S.sidePopup} onClick={e => e.stopPropagation()}>
             <div style={S.taskPopupHeader}>
               <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#fff" }}>🔔 LAM TASK 외 주요 이슈</h3>
               <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
@@ -927,7 +927,7 @@ export default function TeamLinkHub() {
           </div>
 
           {/* Categories + News side by side */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 16, alignItems: "start", marginTop: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 16, alignItems: "start", marginTop: 35 }}>
             {/* Left: Categories */}
             <main style={S.mainCol}>
               {filtered !== null ? (
@@ -1274,6 +1274,7 @@ const CSS = `
 
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  @keyframes sidePopupIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
   @keyframes linkFlash { 0% { background: rgba(6,182,212,0.1); } 100% { background: transparent; } }
   .link-moved { animation: linkFlash 0.5s ease-out; }
 
@@ -1290,10 +1291,10 @@ const S = {
   root: { fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", background: "transparent", minHeight: "100vh", color: "#e2e8f0", position: "relative" },
 
   // Hero - dark shader style
-  topHeader: { position: "relative", zIndex: 1, padding: "32px 40px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)" },
+  topHeader: { position: "relative", zIndex: 1, padding: "32px 40px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", height: 200, display: "flex", alignItems: "flex-end" },
   topHeaderInner: { display: "flex", justifyContent: "space-between", alignItems: "flex-end" },
-  pageGrid: { display: "grid", gridTemplateColumns: "380px 1fr", position: "relative", zIndex: 1, minHeight: "calc(100vh - 120px)" },
-  sidebar: { position: "sticky", top: 0, height: "calc(100vh - 120px)", overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 10, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(16px)", borderRight: "1px solid rgba(255,255,255,0.06)" },
+  pageGrid: { display: "grid", gridTemplateColumns: "650px 1fr", position: "relative", zIndex: 1, minHeight: "calc(100vh - 200px)" },
+  sidebar: { position: "sticky", top: 0, height: "calc(100vh - 200px)", overflowY: "auto", padding: "20px 28px", display: "flex", flexDirection: "column", gap: 10, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(16px)", borderRight: "1px solid rgba(255,255,255,0.06)" },
   contentArea: { padding: "20px 28px 64px", minWidth: 0 },
   heroBadge: { display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 24, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.8)", letterSpacing: "0.02em" },
   heroTitle: { fontSize: 48, fontWeight: 700, letterSpacing: "-0.04em", color: "#fff", margin: 0, lineHeight: 1.05 },
@@ -1338,7 +1339,7 @@ const S = {
   mainCol: { minWidth: 0 },
 
   // Stats strip
-  statsStrip: { display: "flex", alignItems: "center", gap: 20, padding: "14px 20px", background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", position: "relative", zIndex: 2 },
+  statsStrip: { display: "flex", alignItems: "center", gap: 20, padding: "14px 20px", background: "rgba(255,255,255,0.08)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", position: "relative", zIndex: 2 },
   statItem: { display: "flex", alignItems: "baseline", gap: 6 },
   statNum: { fontSize: 18, fontWeight: 700, color: "#fff" },
   statLabel: { fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 500 },
@@ -1348,17 +1349,17 @@ const S = {
 
   searchLabel: { fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 12 },
   emptyState: { textAlign: "center", padding: 60, color: "rgba(255,255,255,0.3)" },
-  listWrap: { background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: 6, border: "1px solid rgba(255,255,255,0.06)" },
+  listWrap: { background: "rgba(255,255,255,0.08)", borderRadius: 12, padding: 6, border: "1px solid rgba(255,255,255,0.1)" },
 
   // Quick links
   quickLinks: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 12 },
-  quickLink: { display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer" },
+  quickLink: { display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "rgba(255,255,255,0.08)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer" },
   quickLinkEmpty: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 14px", background: "transparent", borderRadius: 10, border: "1.5px dashed rgba(255,255,255,0.1)", cursor: "pointer", fontFamily: "inherit", width: "100%", transition: "border-color 0.15s" },
   qlActions: { position: "absolute", top: 4, right: 4, display: "flex", gap: 2 },
 
   // Category tabs
   catTabBar: { marginBottom: 0, overflowX: "auto" },
-  catTabList: { display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px 12px 0 0", border: "1px solid rgba(255,255,255,0.06)", borderBottom: "none" },
+  catTabList: { display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", padding: "12px 16px", background: "rgba(255,255,255,0.08)", borderRadius: "12px 12px 0 0", border: "1px solid rgba(255,255,255,0.1)", borderBottom: "none" },
   catPill: { display: "flex", alignItems: "center", gap: 4, padding: "5px 14px", background: "transparent", border: "1px solid transparent", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", color: "rgba(255,255,255,0.5)", transition: "all 0.15s", whiteSpace: "nowrap" },
   catPillAdd: { width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "1.5px dashed rgba(255,255,255,0.15)", borderRadius: 6, fontSize: 14, cursor: "pointer", fontFamily: "inherit", color: "rgba(255,255,255,0.3)", transition: "all 0.15s" },
   catMoveBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 10, color: "rgba(255,255,255,0.3)", padding: "2px", opacity: 0.5, transition: "opacity 0.15s" },
@@ -1366,7 +1367,7 @@ const S = {
 
   catGrid: { display: "flex", flexDirection: "column", gap: 16 },
   catCard: { background: "rgba(255,255,255,0.03)", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" },
-  catContentBox: { background: "rgba(255,255,255,0.02)", borderRadius: "0 0 12px 12px", minHeight: 400, maxHeight: 480, overflowY: "auto", border: "1px solid rgba(255,255,255,0.06)", borderTop: "1px solid rgba(255,255,255,0.04)" },
+  catContentBox: { background: "rgba(255,255,255,0.06)", borderRadius: "0 0 12px 12px", minHeight: 400, maxHeight: 480, overflowY: "auto", border: "1px solid rgba(255,255,255,0.1)", borderTop: "1px solid rgba(255,255,255,0.06)" },
   catActions: { display: "flex", gap: 4 },
   catBody: { padding: 6, display: "flex", flexDirection: "column", gap: 1 },
 
@@ -1381,29 +1382,31 @@ const S = {
   addLinkRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px", margin: "4px 6px 6px", borderRadius: 10, border: "1.5px dashed", background: "transparent", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", opacity: 0.4, transition: "opacity 0.15s" },
 
   // News panel
-  newsPanel: { background: "rgba(255,255,255,0.03)", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" },
+  newsPanel: { background: "rgba(255,255,255,0.08)", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" },
   newsPanelHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px 10px" },
-  newsPanelTitle: { fontSize: 14, fontWeight: 600, color: "#fff" },
-  newsRefresh: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "3px 7px", cursor: "pointer", fontSize: 13, color: "#fff" },
+  newsPanelTitle: { fontSize: 14, fontWeight: 600, color: "#1a1a2e" },
+  newsRefresh: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "3px 7px", cursor: "pointer", fontSize: 13, color: "#4a5568" },
   newsTabs: { display: "flex", gap: 4, padding: "0 16px 10px" },
-  newsTab: { background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "rgba(255,255,255,0.5)", transition: "all 0.15s" },
+  newsTab: { background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#4a5568", transition: "all 0.15s" },
   newsTabActive: { background: "#06b6d4", color: "#000" },
   newsContent: { borderTop: "1px solid rgba(255,255,255,0.04)" },
   newsLoading: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 16px" },
   spinner: { width: 24, height: 24, border: "2px solid rgba(255,255,255,0.1)", borderTopColor: "#06b6d4", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
-  newsError: { display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 16px", fontSize: 12, color: "rgba(255,255,255,0.4)" },
+  newsError: { display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 16px", fontSize: 12, color: "#64748b" },
   newsList: { display: "flex", flexDirection: "column" },
   newsItem: { display: "flex", gap: 10, padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer" },
   newsRank: { width: 20, height: 20, borderRadius: 4, background: "#06b6d4", color: "#000", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0, marginTop: 2 },
   newsItemContent: { flex: 1, display: "flex", flexDirection: "column", gap: 3, minWidth: 0 },
-  newsItemTitle: { fontSize: 12, fontWeight: 500, lineHeight: 1.5, color: "#e2e8f0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" },
-  newsItemSummary: { fontSize: 11, color: "rgba(255,255,255,0.35)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" },
-  newsItemMeta: { fontSize: 10, color: "rgba(255,255,255,0.25)" },
+  newsItemTitle: { fontSize: 12, fontWeight: 500, lineHeight: 1.5, color: "#1e293b", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" },
+  newsItemSummary: { fontSize: 11, color: "#64748b", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" },
+  newsItemMeta: { fontSize: 10, color: "#94a3b8" },
 
   // Modals
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(8px)" },
-  slideOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, backdropFilter: "blur(4px)" },
-  slidePanel: { position: "fixed", top: 0, right: 0, width: 520, height: "100vh", background: "#111118", borderLeft: "1px solid rgba(255,255,255,0.08)", boxShadow: "-16px 0 48px rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", overflow: "hidden", zIndex: 101, animation: "slideIn 0.25s ease-out" },
+  slideOverlay: {},
+  slidePanel: {},
+  sidePopupOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 100 },
+  sidePopup: { position: "fixed", top: 0, left: 650, width: 520, height: "100vh", background: "#111118", borderLeft: "1px solid rgba(255,255,255,0.08)", borderRight: "1px solid rgba(255,255,255,0.06)", boxShadow: "8px 0 32px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", overflow: "hidden", zIndex: 101, animation: "sidePopupIn 0.2s ease-out" },
   modal: { background: "#111118", borderRadius: 16, padding: "24px 28px", width: "90%", maxWidth: 440, boxShadow: "0 24px 80px rgba(0,0,0,0.5)", maxHeight: "85vh", overflowY: "auto", border: "1px solid rgba(255,255,255,0.08)" },
   modalTitle: { fontSize: 16, fontWeight: 600, marginBottom: 20, color: "#fff" },
   form: { display: "flex", flexDirection: "column", gap: 12 },
