@@ -832,36 +832,42 @@ export default function TeamLinkHub() {
         backgroundColor="transparent"
       />
 
-      {/* Full page 2-column layout */}
+      {/* TOP: Full-width header */}
+      <motion.header
+        style={S.topHeader}
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
+        <div style={S.topHeaderInner}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <div style={S.heroBadge}>
+              <span style={{ fontSize: 12 }}>✦</span> 선행AI팀 워크스페이스
+            </div>
+            <h1 style={S.heroTitle}>
+              <span style={{
+                fontWeight: 800, fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-0.03em",
+                background: "linear-gradient(135deg, #fff 0%, #06b6d4 40%, #f97316 70%, #fff 100%)",
+                backgroundSize: "200% 200%",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              }}>{greeting}</span>
+            </h1>
+          </div>
+          <p style={{ ...S.heroDate, fontSize: 24, fontWeight: 500, color: "rgba(255,255,255,0.5)" }}>
+            {now.getFullYear()}.{String(now.getMonth()+1).padStart(2,"0")}.{String(now.getDate()).padStart(2,"0")} ({weekday}) {String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}
+          </p>
+        </div>
+      </motion.header>
+
+      {/* BELOW: Sidebar + Content */}
       <div style={S.pageGrid}>
         {/* LEFT SIDEBAR */}
         <motion.aside
           style={S.sidebar}
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, x: -16 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
         >
-          {/* Badge - full width */}
-          <div style={{ ...S.heroBadge, alignSelf: "flex-start" }}>
-            <span style={{ fontSize: 12 }}>✦</span> 선행AI팀 워크스페이스
-          </div>
-
-          {/* Title - full width large */}
-          <h1 style={{ ...S.heroTitle, width: "100%" }}>
-            <span style={{
-              display: "block", fontWeight: 300, fontSize: 32,
-              background: "linear-gradient(135deg, #fff 0%, #06b6d4 40%, #f97316 70%, #fff 100%)",
-              backgroundSize: "200% 200%",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-            }}>{greeting}</span>
-            <span style={{ display: "block", fontWeight: 800, fontSize: 48, color: "#fff", letterSpacing: "-0.03em" }}>Workspace</span>
-          </h1>
-
-          {/* Date - full width */}
-          <p style={{ ...S.heroDate, width: "100%" }}>
-            {now.getFullYear()}.{String(now.getMonth()+1).padStart(2,"0")}.{String(now.getDate()).padStart(2,"0")} ({weekday}) {String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}
-          </p>
-
           {/* Schedule */}
           <div className="glass-card" style={S.glassCard}>
             <div style={S.glassCardLabel}>📅 오늘 일정</div>
@@ -901,7 +907,7 @@ export default function TeamLinkHub() {
 
         {/* RIGHT CONTENT */}
         <div style={S.contentArea}>
-          {/* Top: Stats + Admin */}
+          {/* Stats + Admin */}
           <div style={S.statsStrip}>
             <div style={S.statItem}><span style={S.statNum}>{categories.length}</span><span style={S.statLabel}>카테고리</span></div>
             <div style={S.statDivider} />
@@ -1283,9 +1289,11 @@ const S = {
   root: { fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", background: "transparent", minHeight: "100vh", color: "#e2e8f0", position: "relative" },
 
   // Hero - dark shader style
-  pageGrid: { display: "grid", gridTemplateColumns: "500px 1fr", minHeight: "100vh", position: "relative", zIndex: 1 },
-  sidebar: { position: "sticky", top: 0, height: "100vh", overflowY: "auto", padding: "28px 24px", display: "flex", flexDirection: "column", gap: 12, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(16px)", borderRight: "1px solid rgba(255,255,255,0.06)" },
-  contentArea: { padding: "24px 28px 64px", minWidth: 0 },
+  topHeader: { position: "relative", zIndex: 1, padding: "32px 40px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)" },
+  topHeaderInner: { display: "flex", justifyContent: "space-between", alignItems: "flex-end" },
+  pageGrid: { display: "grid", gridTemplateColumns: "380px 1fr", position: "relative", zIndex: 1, minHeight: "calc(100vh - 120px)" },
+  sidebar: { position: "sticky", top: 0, height: "calc(100vh - 120px)", overflowY: "auto", padding: "20px 24px", display: "flex", flexDirection: "column", gap: 10, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(16px)", borderRight: "1px solid rgba(255,255,255,0.06)" },
+  contentArea: { padding: "20px 28px 64px", minWidth: 0 },
   heroBadge: { display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 24, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.8)", letterSpacing: "0.02em" },
   heroTitle: { fontSize: 48, fontWeight: 700, letterSpacing: "-0.04em", color: "#fff", margin: 0, lineHeight: 1.05 },
   heroDate: { fontSize: 14, fontWeight: 400, color: "rgba(255,255,255,0.4)", margin: 0 },
