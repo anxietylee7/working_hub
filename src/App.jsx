@@ -853,14 +853,14 @@ export default function TeamLinkHub() {
       {/* Full-page WebGL Mesh Gradient Background */}
       <MeshGradient
         style={{ position: "fixed", inset: 0, width: "100%", height: "100%", zIndex: 0 }}
-        colors={["#000000", "#06b6d4", "#0891b2", "#164e63", "#f97316"]}
-        speed={0.3}
-        backgroundColor="#000000"
+        colors={["#030303", "#6366f1", "#e11d48", "#1e1b4b", "#030303"]}
+        speed={0.25}
+        backgroundColor="#030303"
       />
       <MeshGradient
-        style={{ position: "fixed", inset: 0, width: "100%", height: "100%", zIndex: 0, opacity: 0.4 }}
-        colors={["#000000", "#ffffff", "#06b6d4", "#f97316"]}
-        speed={0.2}
+        style={{ position: "fixed", inset: 0, width: "100%", height: "100%", zIndex: 0, opacity: 0.35 }}
+        colors={["#030303", "#ffffff", "#6366f1", "#e11d48"]}
+        speed={0.15}
         wireframe={true}
         backgroundColor="transparent"
       />
@@ -880,7 +880,7 @@ export default function TeamLinkHub() {
             <h1 style={S.heroTitle}>
               <span style={{
                 fontWeight: 800, fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-0.03em",
-                background: "linear-gradient(135deg, #fff 0%, #06b6d4 40%, #f97316 70%, #fff 100%)",
+                background: "linear-gradient(to right, #a5b4fc, rgba(255,255,255,0.9), #fda4af)",
                 backgroundSize: "200% 200%",
                 WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
               }}>{greeting}</span>
@@ -1269,7 +1269,7 @@ const CSS = `
 
   /* Gradient text */
   .hero-title-gradient {
-    background: linear-gradient(135deg, #ffffff 0%, #06b6d4 40%, #f97316 70%, #ffffff 100%);
+    background: linear-gradient(to right, #a5b4fc, rgba(255,255,255,0.9), #fda4af);
     background-size: 200% 200%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -1345,7 +1345,7 @@ const S = {
   // Hero - dark shader style
   topHeader: { position: "relative", zIndex: 1, padding: "32px 40px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", height: 200, display: "flex", alignItems: "flex-end" },
   topHeaderInner: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", width: "100%", gap: 40 },
-  pageGrid: { display: "grid", gridTemplateColumns: "550px 1fr", position: "relative", zIndex: 1, minHeight: "calc(100vh - 200px)" },
+  pageGrid: { display: "grid", gridTemplateColumns: "500px 1fr", position: "relative", zIndex: 1, minHeight: "calc(100vh - 200px)" },
   sidebar: { position: "sticky", top: 0, height: "calc(100vh - 200px)", overflowY: "auto", padding: "20px 28px", display: "flex", flexDirection: "column", gap: 10, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(16px)", borderRight: "1px solid rgba(255,255,255,0.06)" },
   contentArea: { padding: "20px 28px 64px", minWidth: 0 },
   heroBadge: { display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 24, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.8)", letterSpacing: "0.02em" },
@@ -1458,7 +1458,7 @@ const S = {
   slideOverlay: {},
   slidePanel: {},
   sidePopupOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 100 },
-  sidePopup: { position: "fixed", top: 0, left: 550, width: 520, height: "100vh", background: "#111118", borderLeft: "1px solid rgba(255,255,255,0.08)", borderRight: "1px solid rgba(255,255,255,0.06)", boxShadow: "8px 0 32px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", overflow: "hidden", zIndex: 101, animation: "sidePopupIn 0.2s ease-out" },
+  sidePopup: { position: "fixed", top: 0, left: 500, width: 520, height: "100vh", background: "#111118", borderLeft: "1px solid rgba(255,255,255,0.08)", borderRight: "1px solid rgba(255,255,255,0.06)", boxShadow: "8px 0 32px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", overflow: "hidden", zIndex: 101, animation: "sidePopupIn 0.2s ease-out" },
   modal: { background: "#111118", borderRadius: 16, padding: "24px 28px", width: "90%", maxWidth: 440, boxShadow: "0 24px 80px rgba(0,0,0,0.5)", maxHeight: "85vh", overflowY: "auto", border: "1px solid rgba(255,255,255,0.08)" },
   modalTitle: { fontSize: 16, fontWeight: 600, marginBottom: 20, color: "#fff" },
   form: { display: "flex", flexDirection: "column", gap: 12 },
