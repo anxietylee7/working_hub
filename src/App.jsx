@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
 
 // ─── Supabase config ───
 const SUPABASE_URL = "https://pyfzeyxcwzecjzeuhehn.supabase.co";
@@ -601,7 +600,7 @@ function TodoBanner({ isAdmin }) {
         <span style={{ fontSize: 11, color: "#94a3b8", flexShrink: 0 }}>상세 →</span>
       </div>
 
-      {showPopup && createPortal(
+      {showPopup && (
         <div style={S.sidePopupOverlay} onClick={() => setShowPopup(false)}>
           <div style={S.sidePopup} onClick={e => e.stopPropagation()}>
             <div style={S.taskPopupHeader}>
@@ -641,8 +640,7 @@ function TodoBanner({ isAdmin }) {
               </div>
             )}
           </div>
-        </div>,
-        document.body
+        </div>
       )}
     </>
   );
@@ -1418,7 +1416,7 @@ const S = {
   topHeader: { position: "relative", zIndex: 1, padding: "32px 40px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", height: 200, display: "flex", alignItems: "flex-end" },
   topHeaderInner: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", width: "100%", gap: 40 },
   pageGrid: { display: "grid", gridTemplateColumns: "500px 1fr", position: "relative", zIndex: 1, minHeight: "calc(100vh - 200px)" },
-  sidebar: { position: "sticky", top: 0, height: "calc(100vh - 200px)", overflowY: "auto", padding: "20px 28px", display: "flex", flexDirection: "column", gap: 10, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(16px)", borderRight: "1px solid rgba(255,255,255,0.06)" },
+  sidebar: { position: "sticky", top: 0, height: "calc(100vh - 200px)", overflowY: "auto", padding: "20px 28px", display: "flex", flexDirection: "column", gap: 10, background: "rgba(0,0,0,0.45)", borderRight: "1px solid rgba(255,255,255,0.06)" },
   contentArea: { padding: "20px 28px 64px", minWidth: 0 },
   heroBadge: { display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 24, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.8)", letterSpacing: "0.02em" },
   heroTitle: { fontSize: 48, fontWeight: 700, letterSpacing: "-0.04em", color: "#fff", margin: 0, lineHeight: 1.05 },
