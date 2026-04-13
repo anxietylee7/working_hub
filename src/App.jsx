@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { MeshGradient } from "@paper-design/shaders-react";
 import { motion } from "framer-motion";
 
@@ -180,18 +181,18 @@ function SidePanel() {
               className="file-holder-tab"
               style={{
                 padding: isActive ? "8px 16px 10px" : "6px 14px 8px",
-                background: "#fff",
-                border: `1px solid ${tab.color}40`,
-                borderBottom: isActive ? "1px solid #fff" : `1px solid ${tab.color}40`,
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderBottom: isActive ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "10px 10px 0 0",
                 cursor: "pointer", fontFamily: "inherit",
                 fontSize: isActive ? 12 : 11, fontWeight: 700,
-                color: tab.color,
+                color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
                 transition: "all 0.2s",
                 position: "relative",
                 zIndex: isActive ? 3 : 1,
                 marginBottom: -1,
-                opacity: isActive ? 1 : 0.55,
+                opacity: isActive ? 1 : 0.7,
               }}
             >
               {tab.label}
@@ -202,17 +203,16 @@ function SidePanel() {
 
       {/* Panel body */}
       <div style={{
-        background: "#fff", borderRadius: "0 12px 16px 16px",
-        border: `1px solid ${activeColor}30`, borderTop: `1px solid ${activeColor}30`,
+        background: "rgba(255,255,255,0.08)", borderRadius: "0 12px 16px 16px",
+        border: "1px solid rgba(255,255,255,0.1)",
         height: 580, display: "flex", flexDirection: "column",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
         overflow: "hidden",
       }}>
         {/* Header */}
-        <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid #f0f1f5", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#e2e8f0", margin: 0 }}>{tabTitle}</h3>
+        <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>{tabTitle}</h3>
           <button onClick={() => { setFeed(prev => { const n = { ...prev }; delete n[activeTab]; return n; }); fetchFeed(activeTab, true); }}
-            style={{ background: "none", border: "1px solid #e5e7eb", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontSize: 13 }}>🔄</button>
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontSize: 13, color: "#fff" }}>🔄</button>
         </div>
 
         {/* Feed content */}
@@ -220,28 +220,28 @@ function SidePanel() {
           {loading ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px" }}>
               <div style={S.spinner} />
-              <span style={{ fontSize: 12, color: "#6b7280", marginTop: 8 }}>최신 뉴스를 찾고 있어요...</span>
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 8 }}>최신 뉴스를 찾고 있어요...</span>
             </div>
           ) : error ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#6b7280" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
               <span>{error}</span>
               <button onClick={() => fetchFeed(activeTab, true)}
-                style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>다시 시도</button>
+                style={{ background: "#06b6d4", color: "#000", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>다시 시도</button>
             </div>
           ) : currentFeed.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column" }}>
               {currentFeed.map((item, i) => (
                 <a key={i} href={item.url || "#"} target="_blank" rel="noopener noreferrer" className="news-item"
-                  style={{ display: "flex", gap: 10, padding: "12px 18px", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textDecoration: "none", color: "inherit" }}>
+                  style={{ display: "flex", gap: 10, padding: "12px 18px", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", textDecoration: "none", color: "inherit" }}>
                   <div style={{
                     width: 22, height: 22, borderRadius: 6, flexShrink: 0, marginTop: 1,
-                    background: `linear-gradient(135deg, ${activeColor}, ${activeColor}88)`,
-                    color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700,
+                    background: "#06b6d4",
+                    color: "#000", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700,
                   }}>{i + 1}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.title}</div>
-                    {item.summary && <div style={{ fontSize: 11, color: "#6b7280", marginTop: 3, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.summary}</div>}
-                    <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 3 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.title}</div>
+                    {item.summary && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 3, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.summary}</div>}
+                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 3 }}>
                       {item.source && <span>{item.source}</span>}
                       {item.date && <span>{item.source ? " · " : ""}{item.date}</span>}
                     </div>
@@ -250,10 +250,10 @@ function SidePanel() {
               ))}
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#9ca3af" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>
               <span>뉴스가 없습니다</span>
               <button onClick={() => fetchFeed(activeTab, true)}
-                style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>불러오기</button>
+                style={{ background: "#06b6d4", color: "#000", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>불러오기</button>
             </div>
           )}
         </div>
@@ -393,9 +393,8 @@ function getWeekInfo() {
   return { year, week: diff + 1 };
 }
 
-function TaskBanner() {
+function TaskBanner({ onOpenPopup }) {
   const [stats, setStats] = useState(null);
-  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -417,45 +416,27 @@ function TaskBanner() {
   }, []);
 
   return (
-    <>
-      <div className="task-banner" style={S.taskBanner} onClick={() => setShowPopup(true)}>
-        <span style={{ fontSize: 14 }}>📋</span>
-        <div style={S.taskMarquee}>
-          <span style={S.taskMarqueeInner}>
-            {stats ? (
-              <>
-                <span style={{ fontWeight: 600, color: "#e2e8f0" }}>TASK</span>
-                <span style={S.taskDivider}>·</span>
-                <span style={{ color: "#d97706", fontWeight: 600 }}>진행 {stats.inProgress}</span>
-                <span style={S.taskDivider}>·</span>
-                <span style={{ color: "#6b7280" }}>대기 {stats.waiting}</span>
-                <span style={S.taskDivider}>·</span>
-                <span style={{ color: "#059669", fontWeight: 600 }}>완료 {stats.done}</span>
-                <span style={S.taskDivider}>·</span>
-                <span style={{ color: "#94a3b8" }}>총 {stats.total}건</span>
-              </>
-            ) : <span style={{ color: "#94a3b8" }}>불러오는 중...</span>}
-          </span>
-        </div>
-        <span style={{ fontSize: 11, color: "#94a3b8", flexShrink: 0 }}>상세 →</span>
+    <div className="task-banner" style={S.taskBanner} onClick={() => onOpenPopup && onOpenPopup("task")}>
+      <span style={{ fontSize: 14 }}>📋</span>
+      <div style={S.taskMarquee}>
+        <span style={S.taskMarqueeInner}>
+          {stats ? (
+            <>
+              <span style={{ fontWeight: 600, color: "#e2e8f0" }}>TASK</span>
+              <span style={S.taskDivider}>·</span>
+              <span style={{ color: "#d97706", fontWeight: 600 }}>진행 {stats.inProgress}</span>
+              <span style={S.taskDivider}>·</span>
+              <span style={{ color: "#6b7280" }}>대기 {stats.waiting}</span>
+              <span style={S.taskDivider}>·</span>
+              <span style={{ color: "#059669", fontWeight: 600 }}>완료 {stats.done}</span>
+              <span style={S.taskDivider}>·</span>
+              <span style={{ color: "#94a3b8" }}>총 {stats.total}건</span>
+            </>
+          ) : <span style={{ color: "#94a3b8" }}>불러오는 중...</span>}
+        </span>
       </div>
-
-      {showPopup && (
-        <div style={S.sidePopupOverlay} onClick={() => setShowPopup(false)}>
-          <div style={S.sidePopup} onClick={e => e.stopPropagation()}>
-            <div style={S.taskPopupHeader}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#fff" }}>📋 LAM TASK 현황</h3>
-              <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
-            </div>
-            <iframe
-              src="https://task-tracker-eta-lovat.vercel.app/widget2"
-              style={S.taskIframe}
-              title="Task Widget"
-            />
-          </div>
-        </div>
-      )}
-    </>
+      <span style={{ fontSize: 11, color: "#94a3b8", flexShrink: 0 }}>상세 →</span>
+    </div>
   );
 }
 
@@ -572,7 +553,7 @@ function TodoBanner({ isAdmin }) {
         <span style={{ fontSize: 11, color: "#94a3b8", flexShrink: 0 }}>상세 →</span>
       </div>
 
-      {showPopup && (
+      {showPopup && createPortal(
         <div style={S.sidePopupOverlay} onClick={() => setShowPopup(false)}>
           <div style={S.sidePopup} onClick={e => e.stopPropagation()}>
             <div style={S.taskPopupHeader}>
@@ -588,10 +569,10 @@ function TodoBanner({ isAdmin }) {
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "0 24px" }}>
               {todos.map((t, i) => (
-                <div key={t.id} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 0", borderBottom: "1px solid #f5f5f5" }}>
+                <div key={t.id} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                   <span style={{ fontSize: 13, color: "#9ca3af", fontWeight: 600, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
                   {editId === t.id ? (
-                    <input value={editText} onChange={e => setEditText(e.target.value)} onKeyDown={e => e.key === "Enter" && saveEdit(t.id)} onBlur={() => saveEdit(t.id)} autoFocus style={{ flex: 1, padding: "6px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 14, fontFamily: "inherit" }} />
+                    <input value={editText} onChange={e => setEditText(e.target.value)} onKeyDown={e => e.key === "Enter" && saveEdit(t.id)} onBlur={() => saveEdit(t.id)} autoFocus style={{ flex: 1, padding: "6px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", fontSize: 14, fontFamily: "inherit", background: "rgba(255,255,255,0.05)", color: "#fff" }} />
                   ) : (
                     <span style={{ flex: 1, fontSize: 14, color: "#e2e8f0", lineHeight: 1.5 }}>{t.text}</span>
                   )}
@@ -603,16 +584,17 @@ function TodoBanner({ isAdmin }) {
                   )}
                 </div>
               ))}
-              {todos.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af", fontSize: 14 }}>이번 주 등록된 이슈가 없습니다</div>}
+              {todos.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "rgba(255,255,255,0.3)", fontSize: 14 }}>이번 주 등록된 이슈가 없습니다</div>}
             </div>
             {isAdmin && (
-              <div style={{ padding: "16px 24px", borderTop: "1px solid #f0f1f5", display: "flex", gap: 8 }}>
-                <input value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => e.key === "Enter" && addTodo()} placeholder="새 이슈 입력..." style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, fontFamily: "inherit" }} />
-                <button onClick={addTodo} disabled={saving} style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1 }}>추가</button>
+              <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8 }}>
+                <input value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => e.key === "Enter" && addTodo()} placeholder="새 이슈 입력..." style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", fontSize: 14, fontFamily: "inherit", background: "rgba(255,255,255,0.05)", color: "#fff" }} />
+                <button onClick={addTodo} disabled={saving} style={{ background: "#06b6d4", color: "#000", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1 }}>추가</button>
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
@@ -634,6 +616,7 @@ export default function TeamLinkHub() {
   const [quicklinks, setQuicklinks] = useState([]);
   const [qlModal, setQlModal] = useState(null);
   const [movedLinkId, setMovedLinkId] = useState(null);
+  const [sidePopup, setSidePopup] = useState(null); // "task" or null
   const formRef = useRef(null);
   const qlFormRef = useRef(null);
   const pwRef = useRef(null);
@@ -883,7 +866,7 @@ export default function TeamLinkHub() {
 
           {/* Task */}
           <div style={S.glassBar}>
-            <TaskBanner />
+            <TaskBanner onOpenPopup={() => setSidePopup("task")} />
           </div>
 
           {/* Issue */}
@@ -1024,6 +1007,23 @@ export default function TeamLinkHub() {
           </div>
         </div>
       </div>
+
+      {/* Task side popup - rendered at root level to escape stacking context */}
+      {sidePopup === "task" && (
+        <div style={S.sidePopupOverlay} onClick={() => setSidePopup(null)}>
+          <div style={S.sidePopup} onClick={e => e.stopPropagation()}>
+            <div style={S.taskPopupHeader}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#fff" }}>📋 LAM TASK 현황</h3>
+              <button onClick={() => setSidePopup(null)} style={S.taskPopupClose}>✕</button>
+            </div>
+            <iframe
+              src="https://task-tracker-eta-lovat.vercel.app/widget2"
+              style={S.taskIframe}
+              title="Task Widget"
+            />
+          </div>
+        </div>
+      )}
 
       {modal && (
         <div style={S.overlay} onClick={() => setModal(null)}>
@@ -1292,8 +1292,8 @@ const S = {
 
   // Hero - dark shader style
   topHeader: { position: "relative", zIndex: 1, padding: "32px 40px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)", height: 200, display: "flex", alignItems: "flex-end" },
-  topHeaderInner: { display: "flex", justifyContent: "space-between", alignItems: "flex-end" },
-  pageGrid: { display: "grid", gridTemplateColumns: "650px 1fr", position: "relative", zIndex: 1, minHeight: "calc(100vh - 200px)" },
+  topHeaderInner: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", width: "100%", gap: 40 },
+  pageGrid: { display: "grid", gridTemplateColumns: "550px 1fr", position: "relative", zIndex: 1, minHeight: "calc(100vh - 200px)" },
   sidebar: { position: "sticky", top: 0, height: "calc(100vh - 200px)", overflowY: "auto", padding: "20px 28px", display: "flex", flexDirection: "column", gap: 10, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(16px)", borderRight: "1px solid rgba(255,255,255,0.06)" },
   contentArea: { padding: "20px 28px 64px", minWidth: 0 },
   heroBadge: { display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 24, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.8)", letterSpacing: "0.02em" },
@@ -1406,7 +1406,7 @@ const S = {
   slideOverlay: {},
   slidePanel: {},
   sidePopupOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 100 },
-  sidePopup: { position: "fixed", top: 0, left: 650, width: 520, height: "100vh", background: "#111118", borderLeft: "1px solid rgba(255,255,255,0.08)", borderRight: "1px solid rgba(255,255,255,0.06)", boxShadow: "8px 0 32px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", overflow: "hidden", zIndex: 101, animation: "sidePopupIn 0.2s ease-out" },
+  sidePopup: { position: "fixed", top: 0, left: 550, width: 520, height: "100vh", background: "#111118", borderLeft: "1px solid rgba(255,255,255,0.08)", borderRight: "1px solid rgba(255,255,255,0.06)", boxShadow: "8px 0 32px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", overflow: "hidden", zIndex: 101, animation: "sidePopupIn 0.2s ease-out" },
   modal: { background: "#111118", borderRadius: 16, padding: "24px 28px", width: "90%", maxWidth: 440, boxShadow: "0 24px 80px rgba(0,0,0,0.5)", maxHeight: "85vh", overflowY: "auto", border: "1px solid rgba(255,255,255,0.08)" },
   modalTitle: { fontSize: 16, fontWeight: 600, marginBottom: 20, color: "#fff" },
   form: { display: "flex", flexDirection: "column", gap: 12 },
