@@ -59,6 +59,56 @@ const REMOTE_BUTTONS = [
   { id: "welfare", emoji: "🎁", label: "복지몰", url: "https://clg.smilegate.net/userview/WELFARE_ME_POINT", color: "#8b5cf6" },
 ];
 
+// ─── Dock Item (바로가기) ───
+function DockItem({ emoji, label, url }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      style={{ position: "relative" }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          width: 48, height: 48, borderRadius: 12,
+          background: hovered ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)",
+          border: hovered ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(255,255,255,0.08)",
+          cursor: "pointer", textDecoration: "none",
+          transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+          transform: hovered ? "translateY(-6px) scale(1.1)" : "translateY(0) scale(1)",
+          boxShadow: hovered ? "0 8px 24px rgba(255,255,255,0.08)" : "none",
+          fontSize: 22,
+        }}
+      >
+        {emoji}
+      </a>
+      <div style={{
+        position: "absolute", bottom: "calc(100% + 10px)", left: "50%", transform: "translateX(-50%)",
+        padding: "5px 10px", borderRadius: 6,
+        background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        color: "#fff", fontSize: 11, fontWeight: 500, whiteSpace: "nowrap",
+        pointerEvents: "none",
+        transition: "all 0.2s ease",
+        opacity: hovered ? 1 : 0,
+        marginBottom: hovered ? 0 : -4,
+      }}>
+        {label}
+        <div style={{
+          position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%) rotate(45deg)",
+          width: 6, height: 6, background: "rgba(0,0,0,0.75)",
+          borderRight: "1px solid rgba(255,255,255,0.08)",
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
+        }} />
+      </div>
+    </div>
+  );
+}
+
 function FloatingRemote() {
   const [hovered, setHovered] = useState(null);
 
@@ -874,15 +924,17 @@ export default function TeamLinkHub() {
             <TodoBanner isAdmin={isAdmin} />
           </div>
 
-          {/* Shortcuts */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 4 }}>
-            <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>바로가기</div>
-            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+          {/* Dock 바로가기 */}
+          <div style={{ marginTop: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>바로가기</div>
+            <div style={{
+              display: "flex", alignItems: "flex-end", gap: 10, padding: "14px 16px",
+              borderRadius: 16,
+              background: "rgba(0,0,0,0.3)", backdropFilter: "blur(12px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}>
               {REMOTE_BUTTONS.map(btn => (
-                <a key={btn.id} href={btn.url} target="_blank" rel="noopener noreferrer" className="shortcut-chip" style={S.shortcutChip}>
-                  <span style={{ fontSize: 13 }}>{btn.emoji}</span>
-                  <span>{btn.label}</span>
-                </a>
+                <DockItem key={btn.id} emoji={btn.emoji} label={btn.label} url={btn.url} />
               ))}
             </div>
           </div>
