@@ -817,112 +817,121 @@ export default function TeamLinkHub() {
     <div style={S.root}>
       <style>{CSS}</style>
 
+      {/* Full-page WebGL Mesh Gradient Background */}
+      <MeshGradient
+        style={{ position: "fixed", inset: 0, width: "100%", height: "100%", zIndex: 0 }}
+        colors={["#000000", "#06b6d4", "#0891b2", "#164e63", "#f97316"]}
+        speed={0.3}
+        backgroundColor="#000000"
+      />
+      <MeshGradient
+        style={{ position: "fixed", inset: 0, width: "100%", height: "100%", zIndex: 0, opacity: 0.4 }}
+        colors={["#000000", "#ffffff", "#06b6d4", "#f97316"]}
+        speed={0.2}
+        wireframe={true}
+        backgroundColor="transparent"
+      />
+
+      {/* Header area: left=hero info, right=news */}
       <header style={S.hero}>
-        {/* WebGL Mesh Gradient Background */}
-        <MeshGradient
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1 }}
-          colors={["#000000", "#06b6d4", "#0891b2", "#164e63", "#f97316"]}
-          speed={0.3}
-          backgroundColor="#000000"
-        />
-        <MeshGradient
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 2, opacity: 0.5 }}
-          colors={["#000000", "#ffffff", "#06b6d4", "#f97316"]}
-          speed={0.2}
-          wireframe={true}
-          backgroundColor="transparent"
-        />
+        <div style={S.heroInner}>
+          {/* Left: Hero content */}
+          <div style={S.heroLeft}>
+            <motion.div
+              style={S.heroBadge}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <span style={{ fontSize: 12 }}>✦</span> 선행AI팀 워크스페이스
+            </motion.div>
 
-        {/* Bottom-left content */}
-        <div style={S.heroContent}>
-          {/* Badge */}
+            <motion.h1
+              style={S.heroTitle}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.3 }}
+            >
+              <span style={{
+                display: "block", fontWeight: 300, fontSize: "clamp(24px, 3vw, 36px)", marginBottom: 2,
+                background: "linear-gradient(135deg, #fff 0%, #06b6d4 40%, #f97316 70%, #fff 100%)",
+                backgroundSize: "200% 200%",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              }}>{greeting}</span>
+              <span style={{ display: "block", fontWeight: 800, fontSize: "clamp(32px, 4.5vw, 52px)", color: "#fff" }}>Workspace</span>
+            </motion.h1>
+
+            <motion.p
+              style={S.heroDate}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
+              {now.getFullYear()}.{String(now.getMonth()+1).padStart(2,"0")}.{String(now.getDate()).padStart(2,"0")} ({weekday}) {String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}
+            </motion.p>
+
+            <motion.div
+              style={S.searchBox}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input style={S.searchInput} placeholder="링크 검색..." value={search} onChange={e => setSearch(e.target.value)} />
+              {search && <button style={S.clearBtn} onClick={() => setSearch("")}>✕</button>}
+            </motion.div>
+
+            {/* Status Cards */}
+            <motion.div
+              style={S.heroCards}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+            >
+              <div className="glass-card" style={S.glassCard}>
+                <div style={S.glassCardLabel}>TASK</div>
+                <TaskBanner />
+              </div>
+              <div className="glass-card" style={S.glassCard}>
+                <div style={S.glassCardLabel}>이슈</div>
+                <TodoBanner isAdmin={isAdmin} />
+              </div>
+              <div className="glass-card" style={S.glassCard}>
+                <div style={S.glassCardLabel}>일정</div>
+                <TodaySchedule />
+              </div>
+            </motion.div>
+
+            {/* Shortcuts */}
+            <motion.div
+              style={S.heroShortcuts}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 1.0 }}
+            >
+              {REMOTE_BUTTONS.map(btn => (
+                <a key={btn.id} href={btn.url} target="_blank" rel="noopener noreferrer" className="shortcut-chip" style={S.shortcutChip}>
+                  <span style={{ fontSize: 14 }}>{btn.emoji}</span>
+                  <span>{btn.label}</span>
+                </a>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Right: News panel */}
           <motion.div
-            style={S.heroBadge}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            style={S.heroRight}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
           >
-            <div style={{ position: "absolute", top: 0, left: 8, right: 8, height: 1, background: "linear-gradient(to right, transparent, rgba(6,182,212,0.3), transparent)", borderRadius: 1 }} />
-            <span style={{ fontSize: 12 }}>✦</span> 선행AI팀 워크스페이스
-          </motion.div>
-
-          {/* Title */}
-          <motion.h1
-            style={S.heroTitle}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
-          >
-            <span style={{
-              display: "block", fontWeight: 300, fontSize: "clamp(28px, 4vw, 40px)", marginBottom: 4,
-              background: "linear-gradient(135deg, #ffffff 0%, #06b6d4 40%, #f97316 70%, #ffffff 100%)",
-              backgroundSize: "200% 200%",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-            }}>{greeting}</span>
-            <span style={{ display: "block", fontWeight: 800, fontSize: "clamp(36px, 5vw, 56px)", color: "#fff" }}>Workspace</span>
-          </motion.h1>
-
-          {/* Date */}
-          <motion.p
-            style={S.heroDate}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-          >
-            {now.getFullYear()}.{String(now.getMonth()+1).padStart(2,"0")}.{String(now.getDate()).padStart(2,"0")} ({weekday}) {String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}
-          </motion.p>
-
-          {/* Search */}
-          <motion.div
-            style={S.searchBox}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.7 }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input style={S.searchInput} placeholder="링크 검색..." value={search} onChange={e => setSearch(e.target.value)} />
-            {search && <button style={S.clearBtn} onClick={() => setSearch("")}>✕</button>}
-          </motion.div>
-
-          {/* Status Cards */}
-          <motion.div
-            style={S.heroCards}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.9 }}
-          >
-            <div className="glass-card" style={S.glassCard}>
-              <div style={S.glassCardLabel}>TASK</div>
-              <TaskBanner />
-            </div>
-            <div className="glass-card" style={S.glassCard}>
-              <div style={S.glassCardLabel}>이슈</div>
-              <TodoBanner isAdmin={isAdmin} />
-            </div>
-            <div className="glass-card" style={S.glassCard}>
-              <div style={S.glassCardLabel}>일정</div>
-              <TodaySchedule />
-            </div>
-          </motion.div>
-
-          {/* Shortcuts */}
-          <motion.div
-            style={S.heroShortcuts}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 1.1 }}
-          >
-            {REMOTE_BUTTONS.map(btn => (
-              <a key={btn.id} href={btn.url} target="_blank" rel="noopener noreferrer" className="shortcut-chip" style={S.shortcutChip}>
-                <span style={{ fontSize: 14 }}>{btn.emoji}</span>
-                <span>{btn.label}</span>
-              </a>
-            ))}
+            <SidePanel />
           </motion.div>
         </div>
       </header>
 
-      <div style={S.twoCol}>
+      {/* Main content - single column */}
+      <div style={S.mainWrap}>
         <main style={S.mainCol}>
           <div style={S.statsStrip}>
             <div style={S.statItem}><span style={S.statNum}>{categories.length}</span><span style={S.statLabel}>카테고리</span></div>
@@ -1030,10 +1039,6 @@ export default function TeamLinkHub() {
             </>
           )}
         </main>
-
-        <aside style={S.sideCol}>
-          <SidePanel />
-        </aside>
       </div>
 
       {modal && (
@@ -1297,11 +1302,13 @@ const CSS = `
 `;
 
 const S = {
-  root: { fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", background: "#0a0a0f", minHeight: "100vh", color: "#e2e8f0" },
+  root: { fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", background: "transparent", minHeight: "100vh", color: "#e2e8f0", position: "relative" },
 
   // Hero - dark shader style
-  hero: { position: "relative", overflow: "hidden", background: "#000", padding: 0, minHeight: 520 },
-  heroContent: { position: "absolute", bottom: 32, left: 32, zIndex: 10, maxWidth: 720, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 14 },
+  hero: { position: "relative", zIndex: 1, padding: "36px 40px 28px" },
+  heroInner: { maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 340px", gap: 28, alignItems: "start" },
+  heroLeft: { display: "flex", flexDirection: "column", gap: 12 },
+  heroRight: { position: "sticky", top: 20 },
   heroBadge: { display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 24, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.8)", letterSpacing: "0.02em" },
   heroTitle: { fontSize: 48, fontWeight: 700, letterSpacing: "-0.04em", color: "#fff", margin: 0, lineHeight: 1.05 },
   heroDate: { fontSize: 14, fontWeight: 400, color: "rgba(255,255,255,0.4)", margin: 0 },
@@ -1341,9 +1348,8 @@ const S = {
   scheduleTime: { fontSize: 11, fontWeight: 600, color: "#06b6d4", minWidth: 32, flexShrink: 0, marginTop: 1 },
 
   // Main layout - dark
-  twoCol: { maxWidth: 1200, margin: "0 auto", padding: "24px 32px 64px", display: "grid", gridTemplateColumns: "1fr 300px", gap: 20, alignItems: "start" },
+  mainWrap: { maxWidth: 1280, margin: "0 auto", padding: "24px 40px 64px", position: "relative", zIndex: 1 },
   mainCol: { minWidth: 0 },
-  sideCol: { position: "sticky", top: 20 },
 
   // Stats strip
   statsStrip: { display: "flex", alignItems: "center", gap: 20, padding: "14px 20px", background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", position: "relative", zIndex: 2 },
