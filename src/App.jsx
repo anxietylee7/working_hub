@@ -832,107 +832,75 @@ export default function TeamLinkHub() {
         backgroundColor="transparent"
       />
 
-      {/* Header area: left=hero info, right=news */}
-      <header style={S.hero}>
-        <div style={S.heroInner}>
-          {/* Left: Hero content */}
-          <div style={S.heroLeft}>
-            <motion.div
-              style={S.heroBadge}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <span style={{ fontSize: 12 }}>✦</span> 선행AI팀 워크스페이스
-            </motion.div>
+      {/* Full page 2-column layout */}
+      <div style={S.pageGrid}>
+        {/* LEFT SIDEBAR */}
+        <motion.aside
+          style={S.sidebar}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          {/* Badge */}
+          <div style={S.heroBadge}>
+            <span style={{ fontSize: 12 }}>✦</span> 선행AI팀 워크스페이스
+          </div>
 
-            <motion.h1
-              style={S.heroTitle}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
-            >
-              <span style={{
-                display: "block", fontWeight: 300, fontSize: "clamp(24px, 3vw, 36px)", marginBottom: 2,
-                background: "linear-gradient(135deg, #fff 0%, #06b6d4 40%, #f97316 70%, #fff 100%)",
-                backgroundSize: "200% 200%",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              }}>{greeting}</span>
-              <span style={{ display: "block", fontWeight: 800, fontSize: "clamp(32px, 4.5vw, 52px)", color: "#fff" }}>Workspace</span>
-            </motion.h1>
+          {/* Title */}
+          <h1 style={S.heroTitle}>
+            <span style={{
+              display: "block", fontWeight: 300, fontSize: 24,
+              background: "linear-gradient(135deg, #fff 0%, #06b6d4 40%, #f97316 70%, #fff 100%)",
+              backgroundSize: "200% 200%",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            }}>{greeting}</span>
+            <span style={{ display: "block", fontWeight: 800, fontSize: 36, color: "#fff" }}>Workspace</span>
+          </h1>
 
-            <motion.p
-              style={S.heroDate}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-            >
-              {now.getFullYear()}.{String(now.getMonth()+1).padStart(2,"0")}.{String(now.getDate()).padStart(2,"0")} ({weekday}) {String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}
-            </motion.p>
+          <p style={S.heroDate}>
+            {now.getFullYear()}.{String(now.getMonth()+1).padStart(2,"0")}.{String(now.getDate()).padStart(2,"0")} ({weekday}) {String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}
+          </p>
 
-            <motion.div
-              style={S.searchBox}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input style={S.searchInput} placeholder="링크 검색..." value={search} onChange={e => setSearch(e.target.value)} />
-              {search && <button style={S.clearBtn} onClick={() => setSearch("")}>✕</button>}
-            </motion.div>
+          {/* Schedule */}
+          <div className="glass-card" style={S.glassCard}>
+            <div style={S.glassCardLabel}>📅 오늘 일정</div>
+            <TodaySchedule />
+          </div>
 
-            {/* Status Cards */}
-            <motion.div
-              style={S.heroCards}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-            >
-              <div className="glass-card" style={S.glassCard}>
-                <div style={S.glassCardLabel}>TASK</div>
-                <TaskBanner />
-              </div>
-              <div className="glass-card" style={S.glassCard}>
-                <div style={S.glassCardLabel}>이슈</div>
-                <TodoBanner isAdmin={isAdmin} />
-              </div>
-              <div className="glass-card" style={S.glassCard}>
-                <div style={S.glassCardLabel}>일정</div>
-                <TodaySchedule />
-              </div>
-            </motion.div>
+          {/* Search */}
+          <div style={S.searchBox}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input style={S.searchInput} placeholder="링크 검색..." value={search} onChange={e => setSearch(e.target.value)} />
+            {search && <button style={S.clearBtn} onClick={() => setSearch("")}>✕</button>}
+          </div>
 
-            {/* Shortcuts */}
-            <motion.div
-              style={S.heroShortcuts}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 1.0 }}
-            >
+          {/* Task */}
+          <div style={S.glassBar}>
+            <TaskBanner />
+          </div>
+
+          {/* Issue */}
+          <div style={S.glassBar}>
+            <TodoBanner isAdmin={isAdmin} />
+          </div>
+
+          {/* Shortcuts */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 4 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>바로가기</div>
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
               {REMOTE_BUTTONS.map(btn => (
                 <a key={btn.id} href={btn.url} target="_blank" rel="noopener noreferrer" className="shortcut-chip" style={S.shortcutChip}>
-                  <span style={{ fontSize: 14 }}>{btn.emoji}</span>
+                  <span style={{ fontSize: 13 }}>{btn.emoji}</span>
                   <span>{btn.label}</span>
                 </a>
               ))}
-            </motion.div>
+            </div>
           </div>
+        </motion.aside>
 
-          {/* Right: News panel */}
-          <motion.div
-            style={S.heroRight}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-          >
-            <SidePanel />
-          </motion.div>
-        </div>
-      </header>
-
-      {/* Main content - single column */}
-      <div style={S.mainWrap}>
-        <main style={S.mainCol}>
+        {/* RIGHT CONTENT */}
+        <div style={S.contentArea}>
+          {/* Top: Stats + Admin */}
           <div style={S.statsStrip}>
             <div style={S.statItem}><span style={S.statNum}>{categories.length}</span><span style={S.statLabel}>카테고리</span></div>
             <div style={S.statDivider} />
@@ -942,7 +910,7 @@ export default function TeamLinkHub() {
             {isAdmin ? (
               <>
                 <button style={S.addCatBtn} onClick={() => setModal({ type: "category" })}>
-                  <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> 카테고리 추가
+                  <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> 카테고리 추가
                 </button>
                 <button style={S.logoutBtn} onClick={handleLogout} title="관리자 로그아웃">🔓 관리자</button>
               </>
@@ -951,94 +919,103 @@ export default function TeamLinkHub() {
             )}
           </div>
 
-          {filtered !== null ? (
-            <div>
-              <p style={S.searchLabel}>"{search}" 검색 결과 <strong>{filtered.length}</strong>건</p>
-              {filtered.length === 0 ? <div style={S.emptyState}>검색 결과가 없습니다</div> : (
-                <div style={S.listWrap}>{filtered.map(l => <LinkCard key={l.id} link={l} color={l.catColor} badge={`${l.catEmoji} ${l.catName}`} isAdmin={isAdmin} onEdit={() => { setSearch(""); setModal({ type: "link", catId: l.catId, item: l }); }} onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })} />)}</div>
-              )}
-            </div>
-          ) : (
-            <>
-              <div style={S.catTabBar}>
-                <div style={S.catTabList}>
-                  {categories.map((cat, idx) => {
-                    const isActive = activeTab === cat.id;
-                    return (
-                      <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                        {isAdmin && idx > 0 && <button style={S.catMoveBtn} onClick={() => moveCat(cat.id, -1)} title="왼쪽으로">◀</button>}
-                        <button
-                          onClick={() => setActiveTab(cat.id)}
-                          style={{ ...S.catPill, ...(isActive ? { background: cat.color || "#2563eb", color: "#fff", borderColor: cat.color || "#2563eb" } : {}) }}
-                        >
-                          {cat.name}
-                          {isAdmin && isActive && (
-                            <span style={S.catTabActions} onClick={e => e.stopPropagation()}>
-                              <button className="tab-action-pill" onClick={() => setModal({ type: "category", item: cat })} title="수정">✏️</button>
-                              <button className="tab-action-pill" onClick={() => setDeleteConfirm({ type: "category", id: cat.id, title: cat.name })} title="삭제">🗑️</button>
-                            </span>
-                          )}
-                        </button>
-                        {isAdmin && idx < categories.length - 1 && <button style={S.catMoveBtn} onClick={() => moveCat(cat.id, 1)} title="오른쪽으로">▶</button>}
-                      </div>
-                    );
-                  })}
-                  {isAdmin && <button style={S.catPillAdd} onClick={() => setModal({ type: "category" })}>+</button>}
+          {/* Categories + News side by side */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 16, alignItems: "start" }}>
+            {/* Left: Categories */}
+            <main style={S.mainCol}>
+              {filtered !== null ? (
+                <div>
+                  <p style={S.searchLabel}>"{search}" 검색 결과 <strong>{filtered.length}</strong>건</p>
+                  {filtered.length === 0 ? <div style={S.emptyState}>검색 결과가 없습니다</div> : (
+                    <div style={S.listWrap}>{filtered.map(l => <LinkCard key={l.id} link={l} color={l.catColor} badge={`${l.catEmoji} ${l.catName}`} isAdmin={isAdmin} onEdit={() => { setSearch(""); setModal({ type: "link", catId: l.catId, item: l }); }} onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })} />)}</div>
+                  )}
                 </div>
-              </div>
-
-              <div style={S.catContentBox}>
-                {(() => {
-                  const cat = categories.find(c => c.id === activeTab);
-                  if (!cat) return categories.length === 0 ? (
-                    <div style={S.emptyState}><div style={{ fontSize: 48, marginBottom: 12 }}>🔗</div><p style={{ fontWeight: 600 }}>카테고리를 추가해서 시작하세요</p></div>
-                  ) : null;
-                  return (
-                    <>
-                      <div style={S.catBody}>
-                        {cat.links.map((l, idx) => (
-                          <LinkCard key={l.id} link={l} color={cat.color}
-                            isAdmin={isAdmin}
-                            isMoved={movedLinkId === l.id}
-                            onEdit={() => setModal({ type: "link", catId: cat.id, item: l })}
-                            onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })}
-                            onMoveUp={idx > 0 ? () => moveLink(cat.id, l.id, -1) : null}
-                            onMoveDown={idx < cat.links.length - 1 ? () => moveLink(cat.id, l.id, 1) : null}
-                          />
-                        ))}
-                        {cat.links.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "#9ca3af", fontSize: 14 }}>링크를 추가해보세요</div>}
-                        {isAdmin && <button style={{ ...S.addLinkRow, borderColor: `${cat.color}33`, color: cat.color }} onClick={() => setModal({ type: "link", catId: cat.id })}>
-                          <span style={{ fontSize: 20, lineHeight: 1 }}>+</span> 링크 추가
-                        </button>}
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-
-              <div style={{ ...S.quickLinks, marginTop: 16 }}>
-                {quicklinks.map(ql => ql.title ? (
-                  <div key={ql.id} style={{ position: "relative" }}>
-                    <a href={ql.url} target="_blank" rel="noopener noreferrer" className="quick-link" style={{ ...S.quickLink, borderLeft: `4px solid ${ql.color}` }}>
-                      <span style={{ fontSize: 20 }}>{ql.emoji}</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0", flex: 1 }}>{ql.title}</span>
-                      <svg style={{ flexShrink: 0, opacity: 0.3 }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={ql.color} strokeWidth="2.5" strokeLinecap="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
-                    </a>
-                    {isAdmin && <div className="ql-actions" style={S.qlActions}>
-                      <button className="ql-btn" onClick={() => setQlModal(ql)}>✏️</button>
-                      <button className="ql-btn" onClick={() => handleQlClear(ql.id)}>✕</button>
-                    </div>}
+              ) : (
+                <>
+                  <div style={S.catTabBar}>
+                    <div style={S.catTabList}>
+                      {categories.map((cat, idx) => {
+                        const isActive = activeTab === cat.id;
+                        return (
+                          <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                            {isAdmin && idx > 0 && <button style={S.catMoveBtn} onClick={() => moveCat(cat.id, -1)} title="왼쪽으로">◀</button>}
+                            <button
+                              onClick={() => setActiveTab(cat.id)}
+                              style={{ ...S.catPill, ...(isActive ? { background: cat.color || "#06b6d4", color: "#fff", borderColor: cat.color || "#06b6d4" } : {}) }}
+                            >
+                              {cat.name}
+                              {isAdmin && isActive && (
+                                <span style={S.catTabActions} onClick={e => e.stopPropagation()}>
+                                  <button className="tab-action-pill" onClick={() => setModal({ type: "category", item: cat })} title="수정">✏️</button>
+                                  <button className="tab-action-pill" onClick={() => setDeleteConfirm({ type: "category", id: cat.id, title: cat.name })} title="삭제">🗑️</button>
+                                </span>
+                              )}
+                            </button>
+                            {isAdmin && idx < categories.length - 1 && <button style={S.catMoveBtn} onClick={() => moveCat(cat.id, 1)} title="오른쪽으로">▶</button>}
+                          </div>
+                        );
+                      })}
+                      {isAdmin && <button style={S.catPillAdd} onClick={() => setModal({ type: "category" })}>+</button>}
+                    </div>
                   </div>
-                ) : (
-                  <button key={ql.id} onClick={() => isAdmin ? setQlModal(ql) : null} style={S.quickLinkEmpty}>
-                    <span style={{ fontSize: 18, opacity: 0.4 }}>+</span>
-                    <span style={{ fontSize: 12, color: "#9ca3af" }}>{isAdmin ? "바로가기 추가" : "빈 슬롯"}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </main>
+
+                  <div style={S.catContentBox}>
+                    {(() => {
+                      const cat = categories.find(c => c.id === activeTab);
+                      if (!cat) return categories.length === 0 ? (
+                        <div style={S.emptyState}><div style={{ fontSize: 48, marginBottom: 12 }}>🔗</div><p style={{ fontWeight: 600 }}>카테고리를 추가해서 시작하세요</p></div>
+                      ) : null;
+                      return (
+                        <div style={S.catBody}>
+                          {cat.links.map((l, idx) => (
+                            <LinkCard key={l.id} link={l} color={cat.color}
+                              isAdmin={isAdmin}
+                              isMoved={movedLinkId === l.id}
+                              onEdit={() => setModal({ type: "link", catId: cat.id, item: l })}
+                              onDelete={() => setDeleteConfirm({ type: "link", id: l.id, title: l.title })}
+                              onMoveUp={idx > 0 ? () => moveLink(cat.id, l.id, -1) : null}
+                              onMoveDown={idx < cat.links.length - 1 ? () => moveLink(cat.id, l.id, 1) : null}
+                            />
+                          ))}
+                          {cat.links.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "rgba(255,255,255,0.3)", fontSize: 13 }}>링크를 추가해보세요</div>}
+                          {isAdmin && <button style={{ ...S.addLinkRow, borderColor: `${cat.color}33`, color: cat.color }} onClick={() => setModal({ type: "link", catId: cat.id })}>
+                            <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> 링크 추가
+                          </button>}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  <div style={{ ...S.quickLinks, marginTop: 12 }}>
+                    {quicklinks.map(ql => ql.title ? (
+                      <div key={ql.id} style={{ position: "relative" }}>
+                        <a href={ql.url} target="_blank" rel="noopener noreferrer" className="quick-link" style={{ ...S.quickLink, borderLeft: `3px solid ${ql.color}` }}>
+                          <span style={{ fontSize: 18 }}>{ql.emoji}</span>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0", flex: 1 }}>{ql.title}</span>
+                          <svg style={{ flexShrink: 0, opacity: 0.3 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={ql.color} strokeWidth="2.5" strokeLinecap="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                        </a>
+                        {isAdmin && <div className="ql-actions" style={S.qlActions}>
+                          <button className="ql-btn" onClick={() => setQlModal(ql)}>✏️</button>
+                          <button className="ql-btn" onClick={() => handleQlClear(ql.id)}>✕</button>
+                        </div>}
+                      </div>
+                    ) : (
+                      <button key={ql.id} onClick={() => isAdmin ? setQlModal(ql) : null} style={S.quickLinkEmpty}>
+                        <span style={{ fontSize: 16, opacity: 0.4 }}>+</span>
+                        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{isAdmin ? "바로가기 추가" : "빈 슬롯"}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </main>
+
+            {/* Right: News */}
+            <aside style={{ position: "sticky", top: 20 }}>
+              <SidePanel />
+            </aside>
+          </div>
+        </div>
       </div>
 
       {modal && (
@@ -1305,10 +1282,9 @@ const S = {
   root: { fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", background: "transparent", minHeight: "100vh", color: "#e2e8f0", position: "relative" },
 
   // Hero - dark shader style
-  hero: { position: "relative", zIndex: 1, padding: "36px 40px 28px" },
-  heroInner: { maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 340px", gap: 28, alignItems: "start" },
-  heroLeft: { display: "flex", flexDirection: "column", gap: 12 },
-  heroRight: { position: "sticky", top: 20 },
+  pageGrid: { display: "grid", gridTemplateColumns: "300px 1fr", minHeight: "100vh", position: "relative", zIndex: 1 },
+  sidebar: { position: "sticky", top: 0, height: "100vh", overflowY: "auto", padding: "28px 24px", display: "flex", flexDirection: "column", gap: 12, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(16px)", borderRight: "1px solid rgba(255,255,255,0.06)" },
+  contentArea: { padding: "24px 28px 64px", minWidth: 0 },
   heroBadge: { display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 24, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.8)", letterSpacing: "0.02em" },
   heroTitle: { fontSize: 48, fontWeight: 700, letterSpacing: "-0.04em", color: "#fff", margin: 0, lineHeight: 1.05 },
   heroDate: { fontSize: 14, fontWeight: 400, color: "rgba(255,255,255,0.4)", margin: 0 },
@@ -1317,7 +1293,8 @@ const S = {
   glassCardLabel: { fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 },
   heroShortcuts: { display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-start", marginTop: 4 },
   shortcutChip: { display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 14px", borderRadius: 20, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.7)", textDecoration: "none", transition: "all 0.2s", cursor: "pointer" },
-  searchBox: { display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 16px", border: "1px solid rgba(255,255,255,0.1)", width: "100%", maxWidth: 480 },
+  searchBox: { display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 16px", border: "1px solid rgba(255,255,255,0.1)", width: "100%" },
+  glassBar: { background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 16px", border: "1px solid rgba(255,255,255,0.1)" },
   searchInput: { border: "none", background: "transparent", fontSize: 14, flex: 1, outline: "none", fontFamily: "inherit", color: "#fff" },
   clearBtn: { background: "rgba(255,255,255,0.15)", border: "none", cursor: "pointer", color: "#fff", fontSize: 10, padding: "2px 6px", borderRadius: 3 },
 
@@ -1348,7 +1325,6 @@ const S = {
   scheduleTime: { fontSize: 11, fontWeight: 600, color: "#06b6d4", minWidth: 32, flexShrink: 0, marginTop: 1 },
 
   // Main layout - dark
-  mainWrap: { maxWidth: 1280, margin: "0 auto", padding: "24px 40px 64px", position: "relative", zIndex: 1 },
   mainCol: { minWidth: 0 },
 
   // Stats strip
