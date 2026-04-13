@@ -837,7 +837,7 @@ export default function TeamLinkHub() {
   };
 
   const weekday = ["일","월","화","수","목","금","토"][now.getDay()];
-  const greeting = now.getHours() < 12 ? "좋은 아침이에요" : now.getHours() < 18 ? "좋은 오후예요" : "좋은 저녁이에요";
+  const greeting = hour < 6 ? "좋은 밤이에요" : hour < 12 ? "좋은 아침이에요" : hour < 18 ? "좋은 오후예요" : hour < 23 ? "좋은 저녁이에요" : "좋은 밤이에요";
 
   // 시간대별 컬러 테마
   const hour = now.getHours();
