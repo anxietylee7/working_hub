@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { MeshGradient } from "@paper-design/shaders-react";
+import { motion } from "framer-motion";
 
 // ─── Supabase config ───
 const SUPABASE_URL = "https://pyfzeyxcwzecjzeuhehn.supabase.co";
@@ -26,7 +28,7 @@ async function sbDelete(table, id) {
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const PALETTE = ["#4a90d9", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
+const PALETTE = ["#2563eb", "#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#ec4899"];
 const LINK_ICONS = [
   "", "🔗", "📄", "📊", "📁", "📝", "📌", "🎯", "🚀", "💡",
   "📧", "💬", "📅", "🎨", "🛠️", "📈", "🔒", "🌐", "📱", "💻",
@@ -48,7 +50,7 @@ const LABEL_COLORS = [
 
 // ─── Floating Remote (인트라넷 바로가기) ───
 const REMOTE_BUTTONS = [
-  { id: "attendance", emoji: "⏰", label: "근태 관리", url: "https://hr.smilegate.net/tlm/my-work-status", color: "#4a90d9" },
+  { id: "attendance", emoji: "⏰", label: "근태 관리", url: "https://hr.smilegate.net/tlm/my-work-status", color: "#2563eb" },
   { id: "meeting", emoji: "🏢", label: "회의실 예약", url: "https://gea.smilegate.net/gea/reservation/meeting-room", color: "#10b981" },
   { id: "salary", emoji: "💰", label: "급여 조회", url: "https://www.ipayview.com/Index.asp?com_code=Q776&emp_no=H33777", color: "#f59e0b" },
   { id: "leave", emoji: "🏖️", label: "휴가 신청", url: "https://hr.smilegate.net/tlm/vacation-submit/submit", color: "#0ea5e9" },
@@ -65,12 +67,11 @@ function FloatingRemote() {
       position: "sticky", top: 24,
     }}>
       <div style={{
-        background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(12px)",
-        borderRadius: 16, padding: "12px 8px",
+        background: "#fff", borderRadius: 10, padding: "10px 6px",
         display: "flex", flexDirection: "column", gap: 4, alignItems: "center",
-        boxShadow: "0 4px 24px rgba(74,144,217,0.1)", border: "1px solid rgba(74,144,217,0.12)",
+        border: "1px solid #e2e8f0",
       }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: "#4a90d9", letterSpacing: "0.08em", marginBottom: 4, textTransform: "uppercase" }}>바로가기</div>
+        <div style={{ fontSize: 8, fontWeight: 600, color: "#94a3b8", letterSpacing: "0.1em", marginBottom: 2, textTransform: "uppercase" }}>바로가기</div>
         {REMOTE_BUTTONS.map(btn => (
           <div key={btn.id} style={{ position: "relative" }}
             onMouseEnter={() => setHovered(btn.id)}
@@ -79,11 +80,11 @@ function FloatingRemote() {
             <a href={btn.url} target="_blank" rel="noopener noreferrer"
               className="remote-btn"
               style={{
-                width: 44, height: 44, borderRadius: 12,
+                width: 40, height: 40, borderRadius: 8,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 20, textDecoration: "none",
-                background: hovered === btn.id ? `${btn.color}18` : "#f0f7ff",
-                border: hovered === btn.id ? `1px solid ${btn.color}40` : "1px solid #e0ecf8",
+                fontSize: 18, textDecoration: "none",
+                background: hovered === btn.id ? "#f1f5f9" : "transparent",
+                border: "none",
                 transition: "all 0.2s",
                 cursor: "pointer",
               }}
@@ -94,16 +95,16 @@ function FloatingRemote() {
             {hovered === btn.id && (
               <div style={{
                 position: "absolute", left: 52, top: "50%", transform: "translateY(-50%)",
-                background: "#fff", color: "#1a2a3a",
-                padding: "6px 12px", borderRadius: 8,
-                fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
-                boxShadow: "0 4px 12px rgba(74,144,217,0.15)", border: "1px solid #d4e4f7",
+                background: "#0f172a", color: "#fff",
+                padding: "5px 10px", borderRadius: 6,
+                fontSize: 11, fontWeight: 500, whiteSpace: "nowrap",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                 pointerEvents: "none", zIndex: 999,
               }}>
                 {btn.label}
                 <div style={{
-                  position: "absolute", left: -4, top: "50%", transform: "translateY(-50%) rotate(45deg)",
-                  width: 8, height: 8, background: "#fff", borderLeft: "1px solid #d4e4f7", borderBottom: "1px solid #d4e4f7",
+                  position: "absolute", left: -3, top: "50%", transform: "translateY(-50%) rotate(45deg)",
+                  width: 6, height: 6, background: "#0f172a",
                 }} />
               </div>
             )}
@@ -116,8 +117,8 @@ function FloatingRemote() {
 
 // ─── Side Panel with file-holder tabs ───
 const NEWS_TABS = [
-  { id: "llm", label: "💬 LLM 서비스", color: "#0ea5e9" },
-  { id: "ai", label: "🤖 AI 최신", color: "#4a90d9" },
+  { id: "llm", label: "LLM 서비스", color: "#2563eb" },
+  { id: "ai", label: "AI 최신", color: "#64748b" },
 ];
 
 function SidePanel() {
@@ -163,7 +164,7 @@ function SidePanel() {
 
   const currentFeed = feed[activeTab] || [];
   const activeTabData = NEWS_TABS.find(t => t.id === activeTab);
-  const activeColor = activeTabData?.color || "#4a90d9";
+  const activeColor = activeTabData?.color || "#2563eb";
   const tabTitle = activeTab === "ai" ? "🤖 AI 최신 소식" : "💬 LLM 서비스 뉴스";
 
   return (
@@ -209,7 +210,7 @@ function SidePanel() {
       }}>
         {/* Header */}
         <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid #f0f1f5", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1a1a2e", margin: 0 }}>{tabTitle}</h3>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "#e2e8f0", margin: 0 }}>{tabTitle}</h3>
           <button onClick={() => { setFeed(prev => { const n = { ...prev }; delete n[activeTab]; return n; }); fetchFeed(activeTab, true); }}
             style={{ background: "none", border: "1px solid #e5e7eb", borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontSize: 13 }}>🔄</button>
         </div>
@@ -225,7 +226,7 @@ function SidePanel() {
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#6b7280" }}>
               <span>{error}</span>
               <button onClick={() => fetchFeed(activeTab, true)}
-                style={{ background: "#4a90d9", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>다시 시도</button>
+                style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>다시 시도</button>
             </div>
           ) : currentFeed.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column" }}>
@@ -252,7 +253,7 @@ function SidePanel() {
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#9ca3af" }}>
               <span>뉴스가 없습니다</span>
               <button onClick={() => fetchFeed(activeTab, true)}
-                style={{ background: "#4a90d9", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>불러오기</button>
+                style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>불러오기</button>
             </div>
           )}
         </div>
@@ -311,17 +312,18 @@ function TodaySchedule() {
       <div style={S.scheduleCard}>
         <div style={S.scheduleHeader} onClick={() => setShowPopup(true)}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 18 }}>📅</span>
-            <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{dateStr} 일정</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#a8d4f2" }}>{cal ? `${cal.todayCount}건` : "..."}</span>
+            <span style={{ fontSize: 14 }}>📅</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0" }}>오늘 일정</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#2563eb" }}>{cal ? `${cal.todayCount}건` : "..."}</span>
           </div>
+          <span style={{ fontSize: 11, color: "#94a3b8" }}>상세 →</span>
         </div>
 
         <div style={S.scheduleList}>
           {!cal ? (
-            <div style={{ padding: "20px 0", textAlign: "center", color: "rgba(255,255,255,0.5)", fontSize: 13 }}>일정 불러오는 중...</div>
+            <div style={{ padding: "16px 0", textAlign: "center", color: "#94a3b8", fontSize: 12 }}>불러오는 중...</div>
           ) : cal.today.length === 0 ? (
-            <div style={{ padding: "20px 0", textAlign: "center", color: "rgba(255,255,255,0.5)", fontSize: 13 }}>오늘 예정된 일정이 없습니다</div>
+            <div style={{ padding: "16px 0", textAlign: "center", color: "#94a3b8", fontSize: 12 }}>예정된 일정 없음</div>
           ) : (
             cal.today.map((e, i) => {
               const isAllDay = e.start.endsWith("T00:00:00");
@@ -329,8 +331,8 @@ function TodaySchedule() {
                 <div key={i} style={S.scheduleItem}>
                   <div style={S.scheduleTime}>{isAllDay ? "종일" : fmtTime(e.start)}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</div>
-                    {e.location && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>{e.location}</div>}
+                    <div style={{ fontSize: 12, fontWeight: 500, color: "#e2e8f0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</div>
+                    {e.location && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 1 }}>{e.location}</div>}
                   </div>
                 </div>
               );
@@ -343,7 +345,7 @@ function TodaySchedule() {
         <div style={S.overlay} onClick={() => setShowPopup(false)}>
           <div style={S.calPopup} onClick={e => e.stopPropagation()}>
             <div style={S.taskPopupHeader}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#1a1a2e" }}>📅 이번 주 일정</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#e2e8f0" }}>📅 이번 주 일정</h3>
               <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "0 24px 16px" }}>
@@ -353,7 +355,7 @@ function TodaySchedule() {
                 groupByDate(cal.week).map(([date, events]) => (
                   <div key={date} style={{ marginTop: 16 }}>
                     <div style={S.calDateHeader}>
-                      <span style={{ color: "#1a1a2e" }}>{fmtDay(date + "T00:00:00")}</span>
+                      <span style={{ color: "#e2e8f0" }}>{fmtDay(date + "T00:00:00")}</span>
                       <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: 8 }}>{events.length}건</span>
                     </div>
                     {events.map((e, i) => {
@@ -362,7 +364,7 @@ function TodaySchedule() {
                         <div key={i} style={S.calEvent}>
                           <div style={S.calEventTime}>{isAllDay ? "종일" : fmtTime(e.start)}</div>
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>{e.title}</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: "#e2e8f0" }}>{e.title}</div>
                             {e.location && <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>{e.location}</div>}
                           </div>
                         </div>
@@ -417,25 +419,25 @@ function TaskBanner() {
   return (
     <>
       <div className="task-banner" style={S.taskBanner} onClick={() => setShowPopup(true)}>
-        <span style={{ fontSize: 16 }}>📋</span>
+        <span style={{ fontSize: 14 }}>📋</span>
         <div style={S.taskMarquee}>
           <span style={S.taskMarqueeInner}>
             {stats ? (
               <>
-                <span style={{ fontWeight: 700 }}>LAM TASK 현황</span>
-                <span style={S.taskDivider}>|</span>
-                <span style={{ color: "#fcd34d" }}>진행중 {stats.inProgress}건</span>
+                <span style={{ fontWeight: 600, color: "#e2e8f0" }}>TASK</span>
                 <span style={S.taskDivider}>·</span>
-                <span style={{ color: "rgba(255,255,255,0.8)" }}>대기 {stats.waiting}건</span>
+                <span style={{ color: "#d97706", fontWeight: 600 }}>진행 {stats.inProgress}</span>
                 <span style={S.taskDivider}>·</span>
-                <span style={{ color: "#6ee7b7" }}>완료 {stats.done}건</span>
-                <span style={S.taskDivider}>|</span>
-                <span style={{ opacity: 0.6 }}>총 {stats.total}건</span>
+                <span style={{ color: "#6b7280" }}>대기 {stats.waiting}</span>
+                <span style={S.taskDivider}>·</span>
+                <span style={{ color: "#059669", fontWeight: 600 }}>완료 {stats.done}</span>
+                <span style={S.taskDivider}>·</span>
+                <span style={{ color: "#94a3b8" }}>총 {stats.total}건</span>
               </>
-            ) : "TASK 현황 불러오는 중..."}
+            ) : <span style={{ color: "#94a3b8" }}>불러오는 중...</span>}
           </span>
         </div>
-        <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>클릭하여 상세보기 →</span>
+        <span style={{ fontSize: 11, color: "#94a3b8", flexShrink: 0 }}>상세 →</span>
       </div>
 
       {showPopup && (
@@ -550,24 +552,24 @@ function TodoBanner({ isAdmin }) {
 
   return (
     <>
-      <div className="task-banner" style={{ ...S.taskBanner, marginTop: 6 }} onClick={() => setShowPopup(true)}>
-        <span style={{ fontSize: 16 }}>🔔</span>
+      <div className="task-banner" style={{ ...S.taskBanner, marginTop: 0 }} onClick={() => setShowPopup(true)}>
+        <span style={{ fontSize: 14 }}>🔔</span>
         <div style={S.taskMarquee}>
           <span style={S.taskMarqueeInner}>
-            <span style={{ fontWeight: 700 }}>LAM TASK 외 주요 이슈</span>
-            <span style={S.taskDivider}>|</span>
+            <span style={{ fontWeight: 600, color: "#e2e8f0" }}>이슈</span>
+            <span style={S.taskDivider}>·</span>
             {totalCount > 0 ? (
               <>
-                <span>{totalCount}건 등록</span>
-                <span style={S.taskDivider}>|</span>
-                <span style={{ opacity: 0.6 }}>{weekLabel}</span>
+                <span style={{ color: "#e2e8f0" }}>{totalCount}건</span>
+                <span style={S.taskDivider}>·</span>
+                <span style={{ color: "#94a3b8" }}>{weekLabel}</span>
               </>
             ) : (
-              <span style={{ opacity: 0.6 }}>{weekLabel} — 등록된 이슈 없음</span>
+              <span style={{ color: "#94a3b8" }}>등록된 이슈 없음</span>
             )}
           </span>
         </div>
-        <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>클릭하여 상세보기 →</span>
+        <span style={{ fontSize: 11, color: "#94a3b8", flexShrink: 0 }}>상세 →</span>
       </div>
 
       {showPopup && (
@@ -579,7 +581,7 @@ function TodoBanner({ isAdmin }) {
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "12px 24px", borderBottom: "1px solid #f0f1f5" }}>
               <button onClick={prevWeek} style={S.weekNavBtn}>◀</button>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>{weekLabel}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#e2e8f0" }}>{weekLabel}</span>
               <button onClick={nextWeek} style={S.weekNavBtn}>▶</button>
               <button onClick={goThisWeek} style={S.weekTodayBtn}>이번 주</button>
               <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: 4 }}>{totalCount}건</span>
@@ -591,7 +593,7 @@ function TodoBanner({ isAdmin }) {
                   {editId === t.id ? (
                     <input value={editText} onChange={e => setEditText(e.target.value)} onKeyDown={e => e.key === "Enter" && saveEdit(t.id)} onBlur={() => saveEdit(t.id)} autoFocus style={{ flex: 1, padding: "6px 10px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 14, fontFamily: "inherit" }} />
                   ) : (
-                    <span style={{ flex: 1, fontSize: 14, color: "#1a1a2e", lineHeight: 1.5 }}>{t.text}</span>
+                    <span style={{ flex: 1, fontSize: 14, color: "#e2e8f0", lineHeight: 1.5 }}>{t.text}</span>
                   )}
                   {isAdmin && (
                     <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
@@ -606,7 +608,7 @@ function TodoBanner({ isAdmin }) {
             {isAdmin && (
               <div style={{ padding: "16px 24px", borderTop: "1px solid #f0f1f5", display: "flex", gap: 8 }}>
                 <input value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => e.key === "Enter" && addTodo()} placeholder="새 이슈 입력..." style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, fontFamily: "inherit" }} />
-                <button onClick={addTodo} disabled={saving} style={{ background: "#4a90d9", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1 }}>추가</button>
+                <button onClick={addTodo} disabled={saving} style={{ background: "#2563eb", color: "#fff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1 }}>추가</button>
               </div>
             )}
           </div>
@@ -636,7 +638,7 @@ export default function TeamLinkHub() {
   const qlFormRef = useRef(null);
   const pwRef = useRef(null);
 
-  const QL_COLORS = ["#4a90d9", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
+  const QL_COLORS = ["#2563eb", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
   const QL_EMOJIS = ["📝", "🧪", "✅", "📋", "🔗", "💡", "🚀", "📊", "🎯", "⚙️", "📁", "🌐"];
 
   const handleLogin = async () => {
@@ -783,7 +785,7 @@ export default function TeamLinkHub() {
       const title = f.querySelector('[name="ql_title"]').value.trim();
       const url = f.querySelector('[name="ql_url"]').value.trim();
       const emoji = f.querySelector('[name="ql_emoji"]:checked')?.value || "🔗";
-      const color = f.querySelector('[name="ql_color"]:checked')?.value || "#4a90d9";
+      const color = f.querySelector('[name="ql_color"]:checked')?.value || "#2563eb";
       const fullUrl = url && !url.startsWith("http") ? `https://${url}` : url;
       await sbPatch("quicklinks", qlModal.id, { title, url: fullUrl, emoji, color });
       await fetchAll();
@@ -795,7 +797,7 @@ export default function TeamLinkHub() {
   const handleQlClear = async (id) => {
     setSaving(true);
     try {
-      await sbPatch("quicklinks", id, { title: "", url: "", emoji: "🔗", color: "#4a90d9" });
+      await sbPatch("quicklinks", id, { title: "", url: "", emoji: "🔗", color: "#2563eb" });
       await fetchAll();
     } catch (e) { console.error("QL clear error:", e); }
     setSaving(false);
@@ -816,33 +818,111 @@ export default function TeamLinkHub() {
       <style>{CSS}</style>
 
       <header style={S.hero}>
-        <div style={S.heroInner}>
-          <div style={S.heroLeft}>
-            <p style={S.heroDate}>{now.getFullYear()}년 {now.getMonth()+1}월 {now.getDate()}일 ({weekday}) {String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}</p>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-              <h1 style={S.heroTitle}>{greeting} 👋</h1>
+        {/* WebGL Mesh Gradient Background */}
+        <MeshGradient
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1 }}
+          colors={["#000000", "#06b6d4", "#0891b2", "#164e63", "#f97316"]}
+          speed={0.3}
+          backgroundColor="#000000"
+        />
+        <MeshGradient
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 2, opacity: 0.5 }}
+          colors={["#000000", "#ffffff", "#06b6d4", "#f97316"]}
+          speed={0.2}
+          wireframe={true}
+          backgroundColor="transparent"
+        />
+
+        {/* Bottom-left content */}
+        <div style={S.heroContent}>
+          {/* Badge */}
+          <motion.div
+            style={S.heroBadge}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <div style={{ position: "absolute", top: 0, left: 8, right: 8, height: 1, background: "linear-gradient(to right, transparent, rgba(6,182,212,0.3), transparent)", borderRadius: 1 }} />
+            <span style={{ fontSize: 12 }}>✦</span> 선행AI팀 워크스페이스
+          </motion.div>
+
+          {/* Title */}
+          <motion.h1
+            style={S.heroTitle}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+          >
+            <span style={{
+              display: "block", fontWeight: 300, fontSize: "clamp(28px, 4vw, 40px)", marginBottom: 4,
+              background: "linear-gradient(135deg, #ffffff 0%, #06b6d4 40%, #f97316 70%, #ffffff 100%)",
+              backgroundSize: "200% 200%",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            }}>{greeting}</span>
+            <span style={{ display: "block", fontWeight: 800, fontSize: "clamp(36px, 5vw, 56px)", color: "#fff" }}>Workspace</span>
+          </motion.h1>
+
+          {/* Date */}
+          <motion.p
+            style={S.heroDate}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            {now.getFullYear()}.{String(now.getMonth()+1).padStart(2,"0")}.{String(now.getDate()).padStart(2,"0")} ({weekday}) {String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}
+          </motion.p>
+
+          {/* Search */}
+          <motion.div
+            style={S.searchBox}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input style={S.searchInput} placeholder="링크 검색..." value={search} onChange={e => setSearch(e.target.value)} />
+            {search && <button style={S.clearBtn} onClick={() => setSearch("")}>✕</button>}
+          </motion.div>
+
+          {/* Status Cards */}
+          <motion.div
+            style={S.heroCards}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.9 }}
+          >
+            <div className="glass-card" style={S.glassCard}>
+              <div style={S.glassCardLabel}>TASK</div>
+              <TaskBanner />
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
-              <p style={{ ...S.heroSub, margin: 0 }}>선행AI팀 워크스페이스 - 팀 업무에 필요한 모든 링크를 한 곳에서</p>
+            <div className="glass-card" style={S.glassCard}>
+              <div style={S.glassCardLabel}>이슈</div>
+              <TodoBanner isAdmin={isAdmin} />
             </div>
-            <div style={{ ...S.searchBox, marginTop: 16 }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input style={S.searchInput} placeholder="링크 검색..." value={search} onChange={e => setSearch(e.target.value)} />
-              {search && <button style={S.clearBtn} onClick={() => setSearch("")}>✕</button>}
+            <div className="glass-card" style={S.glassCard}>
+              <div style={S.glassCardLabel}>일정</div>
+              <TodaySchedule />
             </div>
-            <TaskBanner />
-            <TodoBanner isAdmin={isAdmin} />
-          </div>
-          <div style={S.heroRight}>
-            <TodaySchedule />
-          </div>
+          </motion.div>
+
+          {/* Shortcuts */}
+          <motion.div
+            style={S.heroShortcuts}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 1.1 }}
+          >
+            {REMOTE_BUTTONS.map(btn => (
+              <a key={btn.id} href={btn.url} target="_blank" rel="noopener noreferrer" className="shortcut-chip" style={S.shortcutChip}>
+                <span style={{ fontSize: 14 }}>{btn.emoji}</span>
+                <span>{btn.label}</span>
+              </a>
+            ))}
+          </motion.div>
         </div>
       </header>
 
       <div style={S.twoCol}>
-        <aside style={{ position: "sticky", top: 24 }}>
-          <FloatingRemote />
-        </aside>
         <main style={S.mainCol}>
           <div style={S.statsStrip}>
             <div style={S.statItem}><span style={S.statNum}>{categories.length}</span><span style={S.statLabel}>카테고리</span></div>
@@ -880,7 +960,7 @@ export default function TeamLinkHub() {
                         {isAdmin && idx > 0 && <button style={S.catMoveBtn} onClick={() => moveCat(cat.id, -1)} title="왼쪽으로">◀</button>}
                         <button
                           onClick={() => setActiveTab(cat.id)}
-                          style={{ ...S.catPill, ...(isActive ? { background: cat.color || "#4a90d9", color: "#fff", borderColor: cat.color || "#4a90d9" } : {}) }}
+                          style={{ ...S.catPill, ...(isActive ? { background: cat.color || "#2563eb", color: "#fff", borderColor: cat.color || "#2563eb" } : {}) }}
                         >
                           {cat.name}
                           {isAdmin && isActive && (
@@ -932,7 +1012,7 @@ export default function TeamLinkHub() {
                   <div key={ql.id} style={{ position: "relative" }}>
                     <a href={ql.url} target="_blank" rel="noopener noreferrer" className="quick-link" style={{ ...S.quickLink, borderLeft: `4px solid ${ql.color}` }}>
                       <span style={{ fontSize: 20 }}>{ql.emoji}</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "#1a1a2e", flex: 1 }}>{ql.title}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0", flex: 1 }}>{ql.title}</span>
                       <svg style={{ flexShrink: 0, opacity: 0.3 }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={ql.color} strokeWidth="2.5" strokeLinecap="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
                     </a>
                     {isAdmin && <div className="ql-actions" style={S.qlActions}>
@@ -1047,7 +1127,7 @@ export default function TeamLinkHub() {
                 <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
                   {QL_COLORS.map(c => (
                     <label key={c} style={{ cursor: "pointer" }}>
-                      <input type="radio" name="ql_color" value={c} defaultChecked={c === (qlModal.color || "#4a90d9")} style={{ display: "none" }} />
+                      <input type="radio" name="ql_color" value={c} defaultChecked={c === (qlModal.color || "#2563eb")} style={{ display: "none" }} />
                       <div className="color-dot" style={{ width: 28, height: 28, borderRadius: "50%", background: c, border: "3px solid transparent", transition: "border 0.15s" }} />
                     </label>
                   ))}
@@ -1117,152 +1197,229 @@ function LinkCard({ link, color, badge, isAdmin, isMoved, onEdit, onDelete, onMo
 }
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  .link-row { text-decoration: none; color: inherit; transition: background 0.15s, transform 0.1s; }
-  .link-row:hover { background: #f8f9fb !important; transform: translateX(2px); }
-  .link-action { background: none; border: none; cursor: pointer; font-size: 13px; padding: 4px 6px; border-radius: 6px; opacity: 0; transition: opacity 0.15s, background 0.15s; }
-  .link-row:hover .link-action { opacity: 1; }
-  .link-action:hover { background: #e5e7eb; }
-  .cat-action { background: rgba(255,255,255,0.2); border: none; cursor: pointer; font-size: 13px; padding: 4px 7px; border-radius: 6px; opacity: 0; transition: opacity 0.15s, background 0.15s; }
-  .cat-action:hover { background: rgba(255,255,255,0.35); }
-  .cat-card:hover .cat-action { opacity: 1; }
-  .cat-action-light { background: none; border: none; cursor: pointer; font-size: 13px; padding: 4px 7px; border-radius: 6px; opacity: 0; transition: opacity 0.15s, background 0.15s; color: #6b7280; }
-  .cat-action-light:hover { background: #f3f4f6; }
-  .cat-card:hover .cat-action-light { opacity: 1; }
-  .quick-link { text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; }
-  .quick-link:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important; }
-  .tab-action-pill { background: none; border: none; cursor: pointer; font-size: 11px; padding: 2px 3px; border-radius: 4px; opacity: 0.7; transition: opacity 0.15s; }
-  .tab-action-pill:hover { opacity: 1; background: rgba(255,255,255,0.25); }
-  input:focus { outline: none; border-color: #4a90d9 !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.15) !important; }
-  input[type="radio"]:checked + .color-dot { border-color: #1a1a2e !important; }
-  .icon-dot {
-    width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-    font-size: 18px; cursor: pointer; border: 2px solid #e5e7eb; transition: border-color 0.15s, background 0.15s; background: #fff;
+
+  /* Animated mesh gradient */
+  .hero-gradient {
+    position: absolute; inset: 0; z-index: 1;
+    background: 
+      radial-gradient(ellipse at 20% 50%, rgba(6,182,212,0.25) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(249,115,22,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(6,182,212,0.1) 0%, transparent 50%);
+    animation: meshMove 12s ease-in-out infinite alternate;
   }
-  .icon-dot:hover { border-color: #4a90d9; background: #f0f0ff; }
-  input[type="radio"]:checked + .icon-dot { border-color: #4a90d9; background: #e8f4fd; box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
-  input[type="radio"]:checked + .label-color-dot { border-color: #4a90d9 !important; }
+  .hero-gradient-2 {
+    position: absolute; inset: 0; z-index: 2; opacity: 0.4;
+    background: 
+      radial-gradient(ellipse at 60% 30%, rgba(255,255,255,0.05) 0%, transparent 40%),
+      radial-gradient(ellipse at 30% 70%, rgba(6,182,212,0.08) 0%, transparent 40%);
+    animation: meshMove2 16s ease-in-out infinite alternate;
+  }
+  @keyframes meshMove {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-20px, 10px) scale(1.05); }
+    100% { transform: translate(10px, -15px) scale(1.02); }
+  }
+  @keyframes meshMove2 {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    100% { transform: translate(15px, -10px) rotate(2deg); }
+  }
+
+  /* Gradient text */
+  .hero-title-gradient {
+    background: linear-gradient(135deg, #ffffff 0%, #06b6d4 40%, #f97316 70%, #ffffff 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 6s ease-in-out infinite;
+  }
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Glass card hover */
+  .glass-card { transition: all 0.2s ease; }
+  .glass-card:hover { background: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.15) !important; }
+
+  /* Shortcut chips */
+  .shortcut-chip { transition: all 0.2s ease; }
+  .shortcut-chip:hover { background: rgba(255,255,255,0.12) !important; border-color: rgba(255,255,255,0.2) !important; color: #fff !important; }
+
+  /* Fade-in animation */
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .hero-gradient { animation: meshMove 12s ease-in-out infinite alternate; }
+
+  /* Links */
+  .link-row { text-decoration: none; color: inherit; transition: background 0.1s; }
+  .link-row:hover { background: rgba(255,255,255,0.04) !important; }
+  .link-action { background: none; border: none; cursor: pointer; font-size: 12px; padding: 3px 5px; border-radius: 4px; opacity: 0; transition: opacity 0.1s; }
+  .link-row:hover .link-action { opacity: 1; }
+  .link-action:hover { background: rgba(255,255,255,0.08); }
+
+  .cat-action, .cat-action-light { background: none; border: none; cursor: pointer; font-size: 12px; padding: 3px 5px; border-radius: 4px; opacity: 0; transition: opacity 0.1s; color: rgba(255,255,255,0.5); }
+  .cat-action:hover, .cat-action-light:hover { background: rgba(255,255,255,0.08); }
+  .cat-card:hover .cat-action, .cat-card:hover .cat-action-light { opacity: 1; }
+
+  .quick-link { text-decoration: none; transition: background 0.15s; }
+  .quick-link:hover { background: rgba(255,255,255,0.06) !important; }
+
+  .tab-action-pill { background: none; border: none; cursor: pointer; font-size: 10px; padding: 2px 3px; border-radius: 3px; opacity: 0.5; transition: opacity 0.1s; }
+  .tab-action-pill:hover { opacity: 1; background: rgba(255,255,255,0.1); }
+
+  input:focus { outline: none; border-color: #06b6d4 !important; box-shadow: 0 0 0 2px rgba(6,182,212,0.2) !important; }
+  input[type="radio"]:checked + .color-dot { border-color: #06b6d4 !important; }
+  .icon-dot {
+    width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: border-color 0.1s; background: rgba(255,255,255,0.05);
+  }
+  .icon-dot:hover { border-color: #06b6d4; background: rgba(6,182,212,0.1); }
+  input[type="radio"]:checked + .icon-dot { border-color: #06b6d4; background: rgba(6,182,212,0.1); }
+  input[type="radio"]:checked + .label-color-dot { border-color: #06b6d4 !important; }
   .label-color-dot:hover { opacity: 0.8; }
-  .news-item { text-decoration: none; color: inherit; transition: background 0.15s; }
-  .news-item:hover { background: #f8f9fb !important; }
-  .inf-card { transition: background 0.15s; }
-  .inf-card:hover { background: #f8f9fb !important; }
+
+  .news-item { text-decoration: none; color: inherit; transition: background 0.1s; }
+  .news-item:hover { background: rgba(255,255,255,0.04) !important; }
+
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes linkFlash { 0% { background: #e8f4fd; } 100% { background: transparent; } }
-  .link-moved { animation: linkFlash 0.6s ease-out; }
-  .task-banner { cursor: pointer; transition: background 0.15s; }
-  .task-banner:hover { background: rgba(255,255,255,0.18) !important; }
-  .ql-actions { position: absolute; top: 4px; right: 4px; display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
-  .ql-actions .ql-btn { background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; font-size: 11px; padding: 2px 5px; }
+  @keyframes linkFlash { 0% { background: rgba(6,182,212,0.1); } 100% { background: transparent; } }
+  .link-moved { animation: linkFlash 0.5s ease-out; }
+
+  .task-banner { cursor: pointer; }
+  .ql-actions { position: absolute; top: 3px; right: 3px; display: flex; gap: 2px; opacity: 0; transition: opacity 0.1s; }
+  .ql-actions .ql-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; font-size: 10px; padding: 2px 4px; color: #fff; }
   div:hover > .ql-actions { opacity: 1; }
+
   .file-holder-tab { outline: none; }
-  .file-holder-tab:hover { opacity: 0.85; }
-  .remote-btn { transition: all 0.2s; }
-  .remote-btn:hover { transform: scale(1.1); }
+  .file-holder-tab:hover { opacity: 0.8; }
 `;
 
 const S = {
-  root: { fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif", background: "#f0f7ff", minHeight: "100vh", color: "#1a2a3a" },
-  hero: { background: "linear-gradient(135deg, #4a90d9 0%, #6db3f2 50%, #89c4f4 100%)", padding: "36px 32px 40px", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.1)" },
-  heroInner: { maxWidth: 1240, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "end" },
-  heroLeft: { display: "flex", flexDirection: "column" }, heroRight: { width: 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10 },
-  heroDate: { fontSize: 13, opacity: 1, marginBottom: 6, fontWeight: 500, color: "rgba(255,255,255,0.9)" },
-  heroTitle: { fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 4, color: "#fff" },
-  heroSub: { fontSize: 14, opacity: 1, fontWeight: 400, color: "rgba(255,255,255,0.85)" },
-  searchBox: { display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.3)", backdropFilter: "blur(8px)", borderRadius: 12, padding: "10px 16px", minWidth: 240, border: "1px solid rgba(255,255,255,0.4)" },
+  root: { fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", background: "#0a0a0f", minHeight: "100vh", color: "#e2e8f0" },
+
+  // Hero - dark shader style
+  hero: { position: "relative", overflow: "hidden", background: "#000", padding: 0, minHeight: 520 },
+  heroContent: { position: "absolute", bottom: 32, left: 32, zIndex: 10, maxWidth: 720, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 14 },
+  heroBadge: { display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 16px", borderRadius: 24, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.8)", letterSpacing: "0.02em" },
+  heroTitle: { fontSize: 48, fontWeight: 700, letterSpacing: "-0.04em", color: "#fff", margin: 0, lineHeight: 1.05 },
+  heroDate: { fontSize: 14, fontWeight: 400, color: "rgba(255,255,255,0.4)", margin: 0 },
+  heroCards: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, width: "100%", maxWidth: 700, marginTop: 8 },
+  glassCard: { background: "rgba(255,255,255,0.05)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "14px 16px", cursor: "pointer", transition: "all 0.2s" },
+  glassCardLabel: { fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 },
+  heroShortcuts: { display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-start", marginTop: 4 },
+  shortcutChip: { display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 14px", borderRadius: 20, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.7)", textDecoration: "none", transition: "all 0.2s", cursor: "pointer" },
+  searchBox: { display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 16px", border: "1px solid rgba(255,255,255,0.1)", width: "100%", maxWidth: 480 },
   searchInput: { border: "none", background: "transparent", fontSize: 14, flex: 1, outline: "none", fontFamily: "inherit", color: "#fff" },
-  clearBtn: { background: "rgba(255,255,255,0.25)", border: "none", cursor: "pointer", color: "#fff", fontSize: 11, padding: "2px 6px", borderRadius: 4 },
+  clearBtn: { background: "rgba(255,255,255,0.15)", border: "none", cursor: "pointer", color: "#fff", fontSize: 10, padding: "2px 6px", borderRadius: 3 },
 
-  taskBanner: { display: "flex", alignItems: "center", gap: 12, marginTop: 12, padding: "10px 16px", background: "rgba(255,255,255,0.28)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.35)", color: "#fff" },
+  // Task banners - dark glass
+  taskBanner: { display: "flex", alignItems: "center", gap: 8, padding: 0, background: "transparent", border: "none", color: "#fff", cursor: "pointer" },
   taskMarquee: { flex: 1, overflow: "hidden" },
-  taskMarqueeInner: { display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap" },
-  taskDivider: { opacity: 0.3 },
-  taskPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 700, height: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.15)", overflow: "hidden" },
-  taskPopupHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid #e8f0fe" },
-  taskPopupClose: { background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#9ca3af", padding: "4px 8px", borderRadius: 6 },
+  taskMarqueeInner: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500, whiteSpace: "nowrap" },
+  taskDivider: { color: "rgba(255,255,255,0.2)" },
+
+  // Popups
+  taskPopup: { background: "#111118", borderRadius: 16, width: "90%", maxWidth: 700, height: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.6)", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)" },
+  taskPopupHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)" },
+  taskPopupClose: { background: "none", border: "none", fontSize: 16, cursor: "pointer", color: "rgba(255,255,255,0.4)", padding: "4px 8px", borderRadius: 4 },
   taskIframe: { flex: 1, width: "100%", border: "none" },
+  calPopup: { background: "#111118", borderRadius: 16, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.6)", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)" },
+  calDateHeader: { fontSize: 13, fontWeight: 600, color: "#fff", padding: "8px 0 4px", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 4 },
+  calEvent: { display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" },
+  calEventTime: { fontSize: 12, fontWeight: 600, color: "#06b6d4", minWidth: 44, flexShrink: 0 },
+  todoPopup: { background: "#111118", borderRadius: 16, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.6)", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)" },
+  weekNavBtn: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 12, color: "rgba(255,255,255,0.6)", fontFamily: "inherit" },
+  weekTodayBtn: { background: "rgba(6,182,212,0.15)", border: "1px solid rgba(6,182,212,0.3)", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#06b6d4", fontFamily: "inherit" },
 
-  calPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.15)", overflow: "hidden" },
-  calDateHeader: { fontSize: 14, fontWeight: 700, color: "#2d6cb4", padding: "8px 0 4px", borderBottom: "1px solid #e8f0fe", marginBottom: 4 },
-  calEvent: { display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderBottom: "1px solid #f5f9ff" },
-  calEventTime: { fontSize: 13, fontWeight: 600, color: "#4a90d9", minWidth: 44, flexShrink: 0 },
-  todoPopup: { background: "#fff", borderRadius: 20, width: "90%", maxWidth: 520, height: "70vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(0,0,0,0.15)", overflow: "hidden" },
-  weekNavBtn: { background: "none", border: "1px solid #d4e4f7", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 12, color: "#6b7280", fontFamily: "inherit" },
-  weekTodayBtn: { background: "#e8f4fd", border: "1px solid #a8d4f2", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#2d6cb4", fontFamily: "inherit" },
-  scheduleCard: { background: "rgba(255,255,255,0.25)", backdropFilter: "blur(12px)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.35)", width: 300, overflow: "hidden" },
-  scheduleHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.12)" },
-  scheduleList: { padding: "4px 0", maxHeight: 220, overflowY: "auto" },
-  scheduleItem: { display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 18px" },
-  scheduleTime: { fontSize: 12, fontWeight: 700, color: "#fff", minWidth: 36, flexShrink: 0, marginTop: 1 },
-  twoCol: { maxWidth: 1240, margin: "0 auto", padding: "0 32px 64px", display: "grid", gridTemplateColumns: "60px 1fr 320px", gap: 20, alignItems: "start" },
+  // Schedule card (inside glass card)
+  scheduleCard: { background: "transparent", borderRadius: 0, border: "none", overflow: "hidden" },
+  scheduleHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: 0, cursor: "pointer" },
+  scheduleList: { padding: "4px 0", maxHeight: 120, overflowY: "auto" },
+  scheduleItem: { display: "flex", alignItems: "flex-start", gap: 8, padding: "4px 0" },
+  scheduleTime: { fontSize: 11, fontWeight: 600, color: "#06b6d4", minWidth: 32, flexShrink: 0, marginTop: 1 },
+
+  // Main layout - dark
+  twoCol: { maxWidth: 1200, margin: "0 auto", padding: "24px 32px 64px", display: "grid", gridTemplateColumns: "1fr 300px", gap: 20, alignItems: "start" },
   mainCol: { minWidth: 0 },
-  sideCol: { position: "sticky", top: 24 },
-  statsStrip: { display: "flex", alignItems: "center", gap: 20, padding: "18px 24px", margin: "-20px 0 24px", background: "#fff", borderRadius: 14, boxShadow: "0 4px 20px rgba(74,144,217,0.08)", position: "relative", zIndex: 2 },
-  statItem: { display: "flex", alignItems: "baseline", gap: 6 },
-  statNum: { fontSize: 22, fontWeight: 800, color: "#2d6cb4" },
-  statLabel: { fontSize: 13, color: "#6b7280", fontWeight: 500 },
-  statDivider: { width: 1, height: 24, background: "#d4e4f7" },
-  refreshBtn: { background: "none", border: "1px solid #d4e4f7", borderRadius: 10, padding: "8px 12px", cursor: "pointer", fontSize: 16, transition: "background 0.15s" },
-  addCatBtn: { display: "flex", alignItems: "center", gap: 6, background: "#4a90d9", color: "#fff", border: "none", borderRadius: 10, padding: "9px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
-  searchLabel: { fontSize: 14, color: "#6b7280", marginBottom: 16 },
-  emptyState: { textAlign: "center", padding: 60, color: "#9ca3af" },
-  listWrap: { background: "#fff", borderRadius: 14, padding: 8, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
+  sideCol: { position: "sticky", top: 20 },
 
-  quickLinks: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 16 },
-  quickLink: { display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "#fff", borderRadius: 12, boxShadow: "0 1px 4px rgba(74,144,217,0.06)", cursor: "pointer" },
-  quickLinkEmpty: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px 16px", background: "#fff", borderRadius: 12, border: "2px dashed #d4e4f7", cursor: "pointer", fontFamily: "inherit", width: "100%", transition: "border-color 0.15s" },
+  // Stats strip
+  statsStrip: { display: "flex", alignItems: "center", gap: 20, padding: "14px 20px", background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", position: "relative", zIndex: 2 },
+  statItem: { display: "flex", alignItems: "baseline", gap: 6 },
+  statNum: { fontSize: 18, fontWeight: 700, color: "#fff" },
+  statLabel: { fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 500 },
+  statDivider: { width: 1, height: 20, background: "rgba(255,255,255,0.08)" },
+  refreshBtn: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 14, color: "#fff", transition: "background 0.15s" },
+  addCatBtn: { display: "flex", alignItems: "center", gap: 6, background: "#06b6d4", color: "#000", border: "none", borderRadius: 8, padding: "7px 16px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
+
+  searchLabel: { fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 12 },
+  emptyState: { textAlign: "center", padding: 60, color: "rgba(255,255,255,0.3)" },
+  listWrap: { background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: 6, border: "1px solid rgba(255,255,255,0.06)" },
+
+  // Quick links
+  quickLinks: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 12 },
+  quickLink: { display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer" },
+  quickLinkEmpty: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 14px", background: "transparent", borderRadius: 10, border: "1.5px dashed rgba(255,255,255,0.1)", cursor: "pointer", fontFamily: "inherit", width: "100%", transition: "border-color 0.15s" },
   qlActions: { position: "absolute", top: 4, right: 4, display: "flex", gap: 2 },
 
+  // Category tabs
   catTabBar: { marginBottom: 0, overflowX: "auto" },
-  catTabList: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", padding: "16px 20px", background: "#fff", borderRadius: "16px 16px 0 0", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" },
-  catPill: { display: "flex", alignItems: "center", gap: 4, padding: "7px 18px", background: "#fff", border: "1.5px solid #d4e4f7", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#6b7280", transition: "all 0.15s", whiteSpace: "nowrap" },
-  catPillAdd: { width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", border: "1.5px dashed #b8d4ed", borderRadius: "50%", fontSize: 16, cursor: "pointer", fontFamily: "inherit", color: "#9ca3af", transition: "all 0.15s" },
-  catMoveBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 10, color: "#9ca3af", padding: "2px", opacity: 0.5, transition: "opacity 0.15s" },
+  catTabList: { display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px 12px 0 0", border: "1px solid rgba(255,255,255,0.06)", borderBottom: "none" },
+  catPill: { display: "flex", alignItems: "center", gap: 4, padding: "5px 14px", background: "transparent", border: "1px solid transparent", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", color: "rgba(255,255,255,0.5)", transition: "all 0.15s", whiteSpace: "nowrap" },
+  catPillAdd: { width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "1.5px dashed rgba(255,255,255,0.15)", borderRadius: 6, fontSize: 14, cursor: "pointer", fontFamily: "inherit", color: "rgba(255,255,255,0.3)", transition: "all 0.15s" },
+  catMoveBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 10, color: "rgba(255,255,255,0.3)", padding: "2px", opacity: 0.5, transition: "opacity 0.15s" },
   catTabActions: { display: "inline-flex", gap: 2, marginLeft: 4 },
 
-  catGrid: { display: "flex", flexDirection: "column", gap: 20 },
-  catCard: { background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)" },
-  catContentBox: { background: "#fff", borderRadius: "0 0 16px 16px", minHeight: 400, maxHeight: 480, overflowY: "auto", borderTop: "1px solid #e8f0fe" },
+  catGrid: { display: "flex", flexDirection: "column", gap: 16 },
+  catCard: { background: "rgba(255,255,255,0.03)", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" },
+  catContentBox: { background: "rgba(255,255,255,0.02)", borderRadius: "0 0 12px 12px", minHeight: 400, maxHeight: 480, overflowY: "auto", border: "1px solid rgba(255,255,255,0.06)", borderTop: "1px solid rgba(255,255,255,0.04)" },
   catActions: { display: "flex", gap: 4 },
-  catBody: { padding: 8, display: "flex", flexDirection: "column", gap: 2 },
-  linkRow: { display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderRadius: 12, cursor: "pointer" },
-  linkIcon: { width: 42, height: 42, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 18 },
+  catBody: { padding: 6, display: "flex", flexDirection: "column", gap: 1 },
+
+  // Link cards
+  linkRow: { display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 10, cursor: "pointer" },
+  linkIcon: { width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 },
   linkInfo: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0 },
-  linkTitle: { fontWeight: 600, fontSize: 14 },
-  linkDesc: { fontSize: 12, color: "#6b7280", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-  linkBadge: { fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 10px", flexShrink: 0 },
+  linkTitle: { fontWeight: 500, fontSize: 13, color: "#e2e8f0" },
+  linkDesc: { fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  linkBadge: { fontSize: 10, fontWeight: 600, borderRadius: 4, padding: "2px 8px", flexShrink: 0 },
   linkActions: { display: "flex", gap: 2, flexShrink: 0 },
-  addLinkRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", margin: "4px 8px 8px", borderRadius: 12, border: "2px dashed", background: "transparent", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: 0.6, transition: "opacity 0.15s" },
-  newsPanel: { background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(74,144,217,0.06)" },
-  newsPanelHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px 12px" },
-  newsPanelTitle: { fontSize: 16, fontWeight: 700 },
-  newsRefresh: { background: "none", border: "1px solid #d4e4f7", borderRadius: 8, padding: "4px 8px", cursor: "pointer", fontSize: 14 },
-  newsTabs: { display: "flex", gap: 6, padding: "0 20px 12px" },
-  newsTab: { background: "#f0f7ff", border: "none", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#6b7280", transition: "all 0.15s" },
-  newsTabActive: { background: "#4a90d9", color: "#fff" },
-  newsContent: { borderTop: "1px solid #e8f0fe" },
-  newsLoading: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px" },
-  spinner: { width: 28, height: 28, border: "3px solid #d4e4f7", borderTopColor: "#4a90d9", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
-  newsError: { display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 20px", fontSize: 13, color: "#6b7280" },
+  addLinkRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "12px", margin: "4px 6px 6px", borderRadius: 10, border: "1.5px dashed", background: "transparent", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", opacity: 0.4, transition: "opacity 0.15s" },
+
+  // News panel
+  newsPanel: { background: "rgba(255,255,255,0.03)", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" },
+  newsPanelHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px 10px" },
+  newsPanelTitle: { fontSize: 14, fontWeight: 600, color: "#fff" },
+  newsRefresh: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "3px 7px", cursor: "pointer", fontSize: 13, color: "#fff" },
+  newsTabs: { display: "flex", gap: 4, padding: "0 16px 10px" },
+  newsTab: { background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "rgba(255,255,255,0.5)", transition: "all 0.15s" },
+  newsTabActive: { background: "#06b6d4", color: "#000" },
+  newsContent: { borderTop: "1px solid rgba(255,255,255,0.04)" },
+  newsLoading: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 16px" },
+  spinner: { width: 24, height: 24, border: "2px solid rgba(255,255,255,0.1)", borderTopColor: "#06b6d4", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
+  newsError: { display: "flex", flexDirection: "column", alignItems: "center", padding: "40px 16px", fontSize: 12, color: "rgba(255,255,255,0.4)" },
   newsList: { display: "flex", flexDirection: "column" },
-  newsItem: { display: "flex", gap: 12, padding: "14px 20px", borderBottom: "1px solid #f5f9ff", cursor: "pointer" },
-  newsRank: { width: 24, height: 24, borderRadius: 6, background: "linear-gradient(135deg, #4a90d9, #6db3f2)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0, marginTop: 2 },
-  newsItemContent: { flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 },
-  newsItemTitle: { fontSize: 13, fontWeight: 600, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" },
-  newsItemSummary: { fontSize: 12, color: "#6b7280", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" },
-  newsItemMeta: { fontSize: 11, color: "#9ca3af" },
-  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" },
-  modal: { background: "#fff", borderRadius: 20, padding: "28px 32px", width: "90%", maxWidth: 440, boxShadow: "0 24px 80px rgba(0,0,0,0.15)", maxHeight: "85vh", overflowY: "auto" },
-  modalTitle: { fontSize: 18, fontWeight: 700, marginBottom: 20, color: "#1a2a3a" },
-  form: { display: "flex", flexDirection: "column", gap: 14 },
-  label: { fontSize: 13, fontWeight: 600, color: "#6b7280", display: "flex", flexDirection: "column", gap: 6 },
-  input: { padding: "10px 14px", borderRadius: 10, border: "1px solid #d4e4f7", fontSize: 14, fontFamily: "inherit", color: "#1a2a3a", background: "#f8fbff", transition: "border 0.15s, box-shadow 0.15s" },
-  iconGrid: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 },
+  newsItem: { display: "flex", gap: 10, padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer" },
+  newsRank: { width: 20, height: 20, borderRadius: 4, background: "#06b6d4", color: "#000", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0, marginTop: 2 },
+  newsItemContent: { flex: 1, display: "flex", flexDirection: "column", gap: 3, minWidth: 0 },
+  newsItemTitle: { fontSize: 12, fontWeight: 500, lineHeight: 1.5, color: "#e2e8f0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" },
+  newsItemSummary: { fontSize: 11, color: "rgba(255,255,255,0.35)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" },
+  newsItemMeta: { fontSize: 10, color: "rgba(255,255,255,0.25)" },
+
+  // Modals
+  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(8px)" },
+  modal: { background: "#111118", borderRadius: 16, padding: "24px 28px", width: "90%", maxWidth: 440, boxShadow: "0 24px 80px rgba(0,0,0,0.5)", maxHeight: "85vh", overflowY: "auto", border: "1px solid rgba(255,255,255,0.08)" },
+  modalTitle: { fontSize: 16, fontWeight: 600, marginBottom: 20, color: "#fff" },
+  form: { display: "flex", flexDirection: "column", gap: 12 },
+  label: { fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.5)", display: "flex", flexDirection: "column", gap: 5 },
+  input: { padding: "8px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", fontSize: 13, fontFamily: "inherit", color: "#fff", background: "rgba(255,255,255,0.05)", transition: "border 0.15s" },
+  iconGrid: { display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 },
   iconLabel: { cursor: "pointer" },
-  modalActions: { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24 },
-  cancelBtn: { background: "#f0f7ff", border: "1px solid #d4e4f7", borderRadius: 10, padding: "9px 20px", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", color: "#4a6a8a" },
-  saveBtn: { background: "#4a90d9", color: "#fff", border: "none", borderRadius: 10, padding: "9px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
-  loginBtn: { display: "flex", alignItems: "center", gap: 4, background: "#f0f7ff", border: "1px solid #d4e4f7", borderRadius: 10, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#4a6a8a", transition: "all 0.15s" },
-  logoutBtn: { display: "flex", alignItems: "center", gap: 4, background: "#e8f4fd", border: "1px solid #a8d4f2", borderRadius: 10, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#2d6cb4", transition: "all 0.15s" },
+  modalActions: { display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 },
+  cancelBtn: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "7px 16px", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", color: "rgba(255,255,255,0.6)" },
+  saveBtn: { background: "#06b6d4", color: "#000", border: "none", borderRadius: 8, padding: "7px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
+  loginBtn: { display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit", color: "rgba(255,255,255,0.6)", transition: "all 0.15s" },
+  logoutBtn: { display: "flex", alignItems: "center", gap: 4, background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.3)", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", color: "#06b6d4", transition: "all 0.15s" },
 };
