@@ -842,38 +842,38 @@ export default function TeamLinkHub() {
         textGrad: "linear-gradient(to right, #fcd34d, rgba(255,255,255,0.9), #fdba74)",
         accent: "#f59e0b",
         shapes: [
-          { w: 550, h: 140, rot: 12, color: "rgba(245,158,11,0.15)", x: "-8%", y: "18%" },
-          { w: 450, h: 120, rot: -15, color: "rgba(251,146,60,0.12)", x: "65%", y: "72%" },
-          { w: 280, h: 80, rot: -8, color: "rgba(217,119,6,0.12)", x: "8%", y: "78%" },
-          { w: 180, h: 55, rot: 20, color: "rgba(252,211,77,0.1)", x: "72%", y: "12%" },
-          { w: 130, h: 38, rot: -22, color: "rgba(253,186,116,0.1)", x: "22%", y: "8%" },
+          { w: 600, h: 160, rot: 12, color: "rgba(245,158,11,0.45)", x: "-8%", y: "15%" },
+          { w: 500, h: 130, rot: -15, color: "rgba(251,146,60,0.35)", x: "60%", y: "65%" },
+          { w: 350, h: 100, rot: -8, color: "rgba(217,119,6,0.3)", x: "5%", y: "75%" },
+          { w: 220, h: 70, rot: 20, color: "rgba(252,211,77,0.3)", x: "70%", y: "10%" },
+          { w: 160, h: 50, rot: -22, color: "rgba(253,186,116,0.25)", x: "25%", y: "5%" },
         ],
-        bgGrad: "radial-gradient(ellipse at 30% 40%, rgba(245,158,11,0.06) 0%, transparent 60%), radial-gradient(ellipse at 70% 70%, rgba(251,146,60,0.04) 0%, transparent 50%)",
+        bgGrad: "radial-gradient(ellipse at 30% 40%, rgba(245,158,11,0.15) 0%, transparent 60%), radial-gradient(ellipse at 70% 70%, rgba(251,146,60,0.1) 0%, transparent 50%)",
       }
     : hour < 18
     ? { // 오후: 그린/라임 + 로즈/퍼플핑크
         textGrad: "linear-gradient(to right, #86efac, rgba(255,255,255,0.9), #f9a8d4)",
         accent: "#10b981",
         shapes: [
-          { w: 550, h: 140, rot: 12, color: "rgba(16,185,129,0.15)", x: "-8%", y: "18%" },
-          { w: 450, h: 120, rot: -15, color: "rgba(225,29,72,0.12)", x: "65%", y: "72%" },
-          { w: 280, h: 80, rot: -8, color: "rgba(168,85,247,0.12)", x: "8%", y: "78%" },
-          { w: 180, h: 55, rot: 20, color: "rgba(132,204,22,0.1)", x: "72%", y: "12%" },
-          { w: 130, h: 38, rot: -22, color: "rgba(244,114,182,0.1)", x: "22%", y: "8%" },
+          { w: 600, h: 160, rot: 12, color: "rgba(16,185,129,0.45)", x: "-8%", y: "15%" },
+          { w: 500, h: 130, rot: -15, color: "rgba(225,29,72,0.35)", x: "60%", y: "65%" },
+          { w: 350, h: 100, rot: -8, color: "rgba(168,85,247,0.3)", x: "5%", y: "75%" },
+          { w: 220, h: 70, rot: 20, color: "rgba(132,204,22,0.3)", x: "70%", y: "10%" },
+          { w: 160, h: 50, rot: -22, color: "rgba(244,114,182,0.25)", x: "25%", y: "5%" },
         ],
-        bgGrad: "radial-gradient(ellipse at 30% 40%, rgba(16,185,129,0.06) 0%, transparent 60%), radial-gradient(ellipse at 70% 70%, rgba(225,29,72,0.04) 0%, transparent 50%)",
+        bgGrad: "radial-gradient(ellipse at 30% 40%, rgba(16,185,129,0.15) 0%, transparent 60%), radial-gradient(ellipse at 70% 70%, rgba(225,29,72,0.1) 0%, transparent 50%)",
       }
     : { // 저녁: 딥 퍼플/시안
         textGrad: "linear-gradient(to right, #c4b5fd, rgba(255,255,255,0.9), #67e8f9)",
         accent: "#7c3aed",
         shapes: [
-          { w: 550, h: 140, rot: 12, color: "rgba(124,58,237,0.15)", x: "-8%", y: "18%" },
-          { w: 450, h: 120, rot: -15, color: "rgba(8,145,178,0.12)", x: "65%", y: "72%" },
-          { w: 280, h: 80, rot: -8, color: "rgba(99,102,241,0.12)", x: "8%", y: "78%" },
-          { w: 180, h: 55, rot: 20, color: "rgba(6,182,212,0.1)", x: "72%", y: "12%" },
-          { w: 130, h: 38, rot: -22, color: "rgba(196,181,253,0.1)", x: "22%", y: "8%" },
+          { w: 600, h: 160, rot: 12, color: "rgba(124,58,237,0.45)", x: "-8%", y: "15%" },
+          { w: 500, h: 130, rot: -15, color: "rgba(8,145,178,0.35)", x: "60%", y: "65%" },
+          { w: 350, h: 100, rot: -8, color: "rgba(99,102,241,0.3)", x: "5%", y: "75%" },
+          { w: 220, h: 70, rot: 20, color: "rgba(6,182,212,0.3)", x: "70%", y: "10%" },
+          { w: 160, h: 50, rot: -22, color: "rgba(196,181,253,0.25)", x: "25%", y: "5%" },
         ],
-        bgGrad: "radial-gradient(ellipse at 30% 40%, rgba(124,58,237,0.06) 0%, transparent 60%), radial-gradient(ellipse at 70% 70%, rgba(8,145,178,0.04) 0%, transparent 50%)",
+        bgGrad: "radial-gradient(ellipse at 30% 40%, rgba(124,58,237,0.15) 0%, transparent 60%), radial-gradient(ellipse at 70% 70%, rgba(8,145,178,0.1) 0%, transparent 50%)",
       };
 
   if (!loaded) return (
@@ -888,7 +888,7 @@ export default function TeamLinkHub() {
       <style>{CSS}</style>
 
       {/* Animated geometric background */}
-      <div style={{ position: "fixed", inset: 0, zIndex: 0, background: "#030303", overflow: "hidden" }}>
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, background: "#0a0a12", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, background: timeTheme.bgGrad }} />
         {timeTheme.shapes.map((s, i) => (
           <div
@@ -907,18 +907,18 @@ export default function TeamLinkHub() {
                 position: "absolute", inset: 0, borderRadius: 9999,
                 background: `linear-gradient(to right, ${s.color}, transparent)`,
                 backdropFilter: "blur(2px)",
-                border: "2px solid rgba(255,255,255,0.12)",
-                boxShadow: "0 8px 32px rgba(255,255,255,0.06)",
+                border: "2px solid rgba(255,255,255,0.2)",
+                boxShadow: "0 8px 40px rgba(255,255,255,0.1)",
               }}>
                 <div style={{
                   position: "absolute", inset: 0, borderRadius: 9999,
-                  background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.15), transparent 70%)",
+                  background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.25), transparent 70%)",
                 }} />
               </div>
             </div>
           </div>
         ))}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(3,3,3,0.7) 0%, transparent 30%, transparent 70%, rgba(3,3,3,0.8) 100%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(10,10,18,0.4) 0%, transparent 20%, transparent 80%, rgba(10,10,18,0.5) 100%)", pointerEvents: "none" }} />
       </div>
 
       {/* TOP: Full-width header */}
