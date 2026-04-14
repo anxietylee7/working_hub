@@ -515,7 +515,7 @@ function fmtMD(d) {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
-function TodoBanner({ isAdmin }) {
+function TodoBanner({ isAdmin, onOpenPopup }) {
   const [todos, setTodos] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [newText, setNewText] = useState("");
@@ -580,7 +580,7 @@ function TodoBanner({ isAdmin }) {
 
   return (
     <>
-      <div className="task-banner" style={{ ...S.taskBanner, marginTop: 0 }} onClick={() => setShowPopup(true)}>
+      <div className="task-banner" style={{ ...S.taskBanner, marginTop: 0 }} onClick={() => onOpenPopup && onOpenPopup()}>
         <span style={{ fontSize: 14 }}>🔔</span>
         <div style={S.taskMarquee}>
           <span style={S.taskMarqueeInner}>
@@ -599,47 +599,99 @@ function TodoBanner({ isAdmin }) {
         </div>
         <span style={{ fontSize: 11, color: "#94a3b8", flexShrink: 0 }}>상세 →</span>
       </div>
+    </>
+  );
+}
 
-      {showPopup && (
-        <div style={S.sidePopupOverlay} onClick={() => setShowPopup(false)}>
-          <div style={S.sidePopup} onClick={e => e.stopPropagation()}>
-            <div style={S.taskPopupHeader}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#fff" }}>🔔 LAM TASK 외 주요 이슈</h3>
-              <button onClick={() => setShowPopup(false)} style={S.taskPopupClose}>✕</button>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "12px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <button onClick={prevWeek} style={S.weekNavBtn}>◀</button>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#e2e8f0" }}>{weekLabel}</span>
-              <button onClick={nextWeek} style={S.weekNavBtn}>▶</button>
-              <button onClick={goThisWeek} style={S.weekTodayBtn}>이번 주</button>
-              <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: 4 }}>{totalCount}건</span>
-            </div>
-            <div style={{ flex: 1, overflowY: "auto", padding: "0 24px" }}>
-              {todos.map((t, i) => (
-                <div key={t.id} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                  <span style={{ fontSize: 13, color: "#9ca3af", fontWeight: 600, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
-                  {editId === t.id ? (
-                    <input value={editText} onChange={e => setEditText(e.target.value)} onKeyDown={e => e.key === "Enter" && saveEdit(t.id)} onBlur={() => saveEdit(t.id)} autoFocus style={{ flex: 1, padding: "6px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", fontSize: 14, fontFamily: "inherit", background: "rgba(255,255,255,0.05)", color: "#fff" }} />
-                  ) : (
-                    <span style={{ flex: 1, fontSize: 14, color: "#e2e8f0", lineHeight: 1.5 }}>{t.text}</span>
-                  )}
-                  {isAdmin && (
-                    <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                      <button onClick={() => { setEditId(t.id); setEditText(t.text); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, padding: "4px", borderRadius: 4 }}>✏️</button>
-                      <button onClick={() => deleteTodo(t.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, padding: "4px", borderRadius: 4 }}>🗑️</button>
-                    </div>
-                  )}
-                </div>
-              ))}
-              {todos.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "rgba(255,255,255,0.3)", fontSize: 14 }}>이번 주 등록된 이슈가 없습니다</div>}
-            </div>
+// ─── Todo Popup Content (rendered at root level) ───
+function TodoPopupContent({ isAdmin, onClose }) {
+  const [todos, setTodos] = useState([]);
+  const [newText, setNewText] = useState("");
+  const [editId, setEditId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [weekYear, setWeekYear] = useState(() => getCurrentWeek().year);
+  const [weekNum, setWeekNum] = useState(() => getCurrentWeek().week);
+
+  const { monday, friday } = getWeekRange(weekYear, weekNum);
+  const month = monday.getMonth() + 1;
+  const monthWeek = Math.ceil((monday.getDate() + (new Date(monday.getFullYear(), monday.getMonth(), 1).getDay() || 7) - 1) / 7);
+  const weekLabel = `${weekYear}년 ${month}월 ${monthWeek}주차 (${fmtMD(monday)} ~ ${fmtMD(friday)})`;
+
+  const load = useCallback(async () => {
+    try {
+      const r = await sbGet("todos", `week_year=eq.${weekYear}&week_number=eq.${weekNum}&order=sort_order.asc,created_at.asc`);
+      setTodos(r);
+    } catch {}
+  }, [weekYear, weekNum]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const totalCount = todos.length;
+  const prevWeek = () => { if (weekNum <= 1) { setWeekYear(y => y - 1); setWeekNum(52); } else setWeekNum(w => w - 1); };
+  const nextWeek = () => { if (weekNum >= 52) { setWeekYear(y => y + 1); setWeekNum(1); } else setWeekNum(w => w + 1); };
+  const goThisWeek = () => { const c = getCurrentWeek(); setWeekYear(c.year); setWeekNum(c.week); };
+
+  const addTodo = async () => {
+    if (!newText.trim()) return;
+    setSaving(true);
+    try {
+      await sbPost("todos", { id: `todo-${uid()}`, text: newText.trim(), done: false, sort_order: todos.length, week_year: weekYear, week_number: weekNum });
+      setNewText("");
+      await load();
+    } catch (e) { alert("추가 실패: " + e.message); }
+    setSaving(false);
+  };
+
+  const deleteTodo = async (id) => {
+    try { await sbDelete("todos", id); setTodos(prev => prev.filter(t => t.id !== id)); } catch {}
+  };
+
+  const saveEdit = async (id) => {
+    if (!editText.trim()) return;
+    try {
+      await sbPatch("todos", id, { text: editText.trim() });
+      setTodos(prev => prev.map(t => t.id === id ? { ...t, text: editText.trim() } : t));
+      setEditId(null);
+    } catch {}
+  };
+
+  return (
+    <>
+      <div style={S.taskPopupHeader}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#fff" }}>🔔 LAM TASK 외 주요 이슈</h3>
+        <button onClick={onClose} style={S.taskPopupClose}>✕</button>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: "12px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <button onClick={prevWeek} style={S.weekNavBtn}>◀</button>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "#e2e8f0" }}>{weekLabel}</span>
+        <button onClick={nextWeek} style={S.weekNavBtn}>▶</button>
+        <button onClick={goThisWeek} style={S.weekTodayBtn}>이번 주</button>
+        <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: 4 }}>{totalCount}건</span>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 24px" }}>
+        {todos.map((t, i) => (
+          <div key={t.id} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <span style={{ fontSize: 13, color: "#9ca3af", fontWeight: 600, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
+            {editId === t.id ? (
+              <input value={editText} onChange={e => setEditText(e.target.value)} onKeyDown={e => e.key === "Enter" && saveEdit(t.id)} onBlur={() => saveEdit(t.id)} autoFocus style={{ flex: 1, padding: "6px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", fontSize: 14, fontFamily: "inherit", background: "rgba(255,255,255,0.05)", color: "#fff" }} />
+            ) : (
+              <span style={{ flex: 1, fontSize: 14, color: "#e2e8f0", lineHeight: 1.5 }}>{t.text}</span>
+            )}
             {isAdmin && (
-              <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8 }}>
-                <input value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => e.key === "Enter" && addTodo()} placeholder="새 이슈 입력..." style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", fontSize: 14, fontFamily: "inherit", background: "rgba(255,255,255,0.05)", color: "#fff" }} />
-                <button onClick={addTodo} disabled={saving} style={{ background: "#06b6d4", color: "#000", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1 }}>추가</button>
+              <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                <button onClick={() => { setEditId(t.id); setEditText(t.text); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, padding: "4px", borderRadius: 4 }}>✏️</button>
+                <button onClick={() => deleteTodo(t.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, padding: "4px", borderRadius: 4 }}>🗑️</button>
               </div>
             )}
           </div>
+        ))}
+        {todos.length === 0 && <div style={{ textAlign: "center", padding: "40px 0", color: "rgba(255,255,255,0.3)", fontSize: 14 }}>이번 주 등록된 이슈가 없습니다</div>}
+      </div>
+      {isAdmin && (
+        <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8 }}>
+          <input value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => e.key === "Enter" && addTodo()} placeholder="새 이슈 입력..." style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", fontSize: 14, fontFamily: "inherit", background: "rgba(255,255,255,0.05)", color: "#fff" }} />
+          <button onClick={addTodo} disabled={saving} style={{ background: "#06b6d4", color: "#000", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1 }}>추가</button>
         </div>
       )}
     </>
@@ -967,7 +1019,7 @@ export default function TeamLinkHub() {
 
           {/* Issue */}
           <div style={S.glassBar}>
-            <TodoBanner isAdmin={isAdmin} />
+            <TodoBanner isAdmin={isAdmin} onOpenPopup={() => setSidePopup("todo")} />
           </div>
 
           {/* Dock 바로가기 */}
@@ -1119,6 +1171,14 @@ export default function TeamLinkHub() {
               style={S.taskIframe}
               title="Task Widget"
             />
+          </div>
+        </div>
+      )}
+
+      {sidePopup === "todo" && (
+        <div style={S.sidePopupOverlay} onClick={() => setSidePopup(null)}>
+          <div style={S.sidePopup} onClick={e => e.stopPropagation()}>
+            <TodoPopupContent isAdmin={isAdmin} onClose={() => setSidePopup(null)} />
           </div>
         </div>
       )}
