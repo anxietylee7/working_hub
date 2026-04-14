@@ -981,11 +981,9 @@ export default function TeamLinkHub() {
               <span style={{ fontSize: 12 }}>✦</span> 선행AI팀 워크스페이스
             </div>
             <h1 style={S.heroTitle}>
-              <span style={{
+              <span className="greeting-text" style={{
                 fontWeight: 800, fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-0.03em",
-                background: timeTheme.textGrad,
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-                display: "inline-block",
+                "--greeting-grad": timeTheme.textGrad,
               }}>{greeting}</span>
             </h1>
           </div>
@@ -1366,10 +1364,19 @@ const CSS = `
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(15px); }
   }
-  .fade-in-down { animation: fadeInDown 0.6s ease-out 0.2s both; }
+  .fade-in-down { animation: fadeInDown 0.6s ease-out both; }
   @keyframes fadeInDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
   .fade-in-left { animation: fadeInLeft 0.5s ease-out 0.4s both; }
   @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
+  .greeting-text {
+    color: #fff;
+    background: var(--greeting-grad, linear-gradient(to right, #a5b4fc, rgba(255,255,255,0.9), #fda4af));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+  }
+  .greeting-text:empty { background: none; }
 
   /* Animated mesh gradient */
   .hero-gradient {
