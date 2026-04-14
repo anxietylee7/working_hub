@@ -984,8 +984,8 @@ export default function TeamLinkHub() {
               <span style={{
                 fontWeight: 800, fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-0.03em",
                 background: timeTheme.textGrad,
-                backgroundSize: "200% 200%",
                 WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                display: "inline-block",
               }}>{greeting}</span>
             </h1>
           </div>
