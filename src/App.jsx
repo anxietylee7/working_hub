@@ -112,7 +112,7 @@ function FloatingRemote() {
   return (
     <div style={{
       display: "flex", flexDirection: "column", gap: 6,
-      position: "sticky", top: 24,
+      position: "sticky", top: 24, zIndex: 1,
     }}>
       <div style={{
         background: "#fff", borderRadius: 10, padding: "10px 6px",
@@ -1591,11 +1591,11 @@ const S = {
   newsItemMeta: { fontSize: 10, color: "#94a3b8" },
 
   // Modals
-  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(8px)" },
+  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, backdropFilter: "blur(8px)" },
   slideOverlay: {},
   slidePanel: {},
-  sidePopupOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 100 },
-  sidePopup: { position: "fixed", top: 0, left: 500, width: 650, height: "100vh", background: "#111118", borderLeft: "1px solid rgba(255,255,255,0.08)", borderRight: "1px solid rgba(255,255,255,0.06)", boxShadow: "8px 0 32px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", overflow: "hidden", zIndex: 101, animation: "sidePopupIn 0.2s ease-out" },
+  sidePopupOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1000 },
+  sidePopup: { position: "fixed", top: 0, left: 500, width: 650, height: "100vh", background: "#111118", borderLeft: "1px solid rgba(255,255,255,0.08)", borderRight: "1px solid rgba(255,255,255,0.06)", boxShadow: "8px 0 32px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", overflow: "hidden", zIndex: 1001, animation: "sidePopupIn 0.2s ease-out" },
   modal: { background: "#111118", borderRadius: 16, padding: "24px 28px", width: "90%", maxWidth: 440, boxShadow: "0 24px 80px rgba(0,0,0,0.5)", maxHeight: "85vh", overflowY: "auto", border: "1px solid rgba(255,255,255,0.08)" },
   modalTitle: { fontSize: 16, fontWeight: 600, marginBottom: 20, color: "#fff" },
   form: { display: "flex", flexDirection: "column", gap: 12 },
