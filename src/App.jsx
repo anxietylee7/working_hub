@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 // ─── Supabase config ───
 const SUPABASE_URL = "https://pyfzeyxcwzecjzeuhehn.supabase.co";
@@ -388,7 +389,7 @@ function TodaySchedule() {
         </div>
       </div>
 
-      {showPopup && cal && (
+      {showPopup && cal && createPortal(
         <div style={S.overlay} onClick={() => setShowPopup(false)}>
           <div style={S.calPopup} onClick={e => e.stopPropagation()}>
             <div style={S.taskPopupHeader}>
@@ -422,7 +423,8 @@ function TodaySchedule() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
@@ -463,7 +465,7 @@ function TaskBanner({ onOpenPopup }) {
   }, []);
 
   return (
-    <div className="task-banner" style={S.taskBanner} onClick={() => window.open("https://wiki.sgr.com/display/aicenter/LAM+AI+Task_M28_4", "_blank", "noopener,noreferrer")}>
+    <div className="task-banner" style={S.taskBanner} onClick={() => window.open("https://wiki.sgr.com/pages/viewpage.action?pageId=855625055", "_blank", "noopener,noreferrer")}>
       <span style={{ fontSize: 14 }}>📋</span>
       <div style={S.taskMarquee}>
         <span style={S.taskMarqueeInner}>
