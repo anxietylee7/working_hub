@@ -4,6 +4,7 @@
 const MASK_RULES = [
   { keywords: ["QC", "회의"], label: "LAM TASK 논의 미팅" },
   { keywords: ["선행AI팀"], label: "팀 업무 논의" },
+  { keywords: ["테스트"], label: "LAM 콘텐츠 내부 테스트" },
 ];
 
 function maskTitle(title) {
