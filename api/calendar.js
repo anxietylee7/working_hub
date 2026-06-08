@@ -1,3 +1,19 @@
+// ─── 민감 일정 라벨 치환 규칙 ───
+// 제목에 keywords 중 하나라도 포함되면 제목 전체를 label로 치환 (장소는 그대로 유지)
+// 위에서부터 순서대로 검사하며, 먼저 매칭되는 규칙이 적용됨
+const MASK_RULES = [
+  { keywords: ["QC", "회의"], label: "LAM TASK 논의 미팅" },
+  { keywords: ["선행AI팀"], label: "팀 업무 논의" },
+];
+
+function maskTitle(title) {
+  if (!title) return title;
+  for (const rule of MASK_RULES) {
+    if (rule.keywords.some(k => title.includes(k))) return rule.label;
+  }
+  return title;
+}
+
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
 
@@ -57,7 +73,7 @@ export default async function handler(req, res) {
 
       if (!summary || !dtstart) continue;
 
-      const title = cleanText(summary);
+      const title = maskTitle(cleanText(summary));
       const loc = cleanText(location);
 
       // 제외 날짜 파싱
